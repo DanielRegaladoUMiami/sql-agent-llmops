@@ -1,0 +1,191 @@
+# Training Configuration for SQL Agent Models
+
+# SQL Generator Training (Qwen 2.5 Coder 7B)
+sql_generator:
+  model_name: "Qwen/Qwen2.5-Coder-7B"
+  max_seq_length: 2048
+
+  # Training hyperparameters
+  learning_rate: 2e-4
+  num_train_epochs: 3
+  batch_size_per_device: 4
+  gradient_accumulation_steps: 1
+  warmup_steps: 100
+
+  # Optimization
+  weight_decay: 0.01
+  lr_scheduler_type: "cosine"
+  optim: "paged_adamw_32bit"
+
+  # LoRA Configuration
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+
+  # Logging and Checkpointing
+  logging_steps: 10
+  save_steps: 50
+  save_total_limit: 3
+  eval_steps: 100
+
+  # Mixed Precision
+  fp16: true
+
+  # Data Configuration
+  dataset: "sql-agent/sql-training-unified"
+  train_split: "train"
+  validation_split: "validation"
+  max_samples: null  # Set to integer to limit training samples
+
+  # Output
+  output_dir: "models/sql_generator"
+
+# Chart Reasoner Training (Phi-3 Mini 3.8B)
+chart_reasoner:
+  model_name: "microsoft/phi-3-mini-4k-instruct"
+  max_seq_length: 2048
+
+  learning_rate: 2e-4
+  num_train_epochs: 3
+  batch_size_per_device: 4
+  gradient_accumulation_steps: 1
+  warmup_steps: 50
+
+  weight_decay: 0.01
+  lr_scheduler_type: "cosine"
+  optim: "paged_adamw_32bit"
+
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+
+  logging_steps: 10
+  save_steps: 50
+  save_total_limit: 3
+
+  fp16: true
+
+  dataset: "sql-agent/chart-reasoning-training"
+  train_split: "train"
+  max_samples: null
+
+  output_dir: "models/chart_reasoner"
+
+# SVG Renderer Training (DeepSeek Coder 1.3B)
+svg_renderer:
+  model_name: "deepseek-ai/deepseek-coder-1.3b-instruct"
+  max_seq_length: 2048
+
+  learning_rate: 2e-4
+  num_train_epochs: 3
+  batch_size_per_device: 8
+  gradient_accumulation_steps: 1
+  warmup_steps: 50
+
+  weight_decay: 0.01
+  lr_scheduler_type: "cosine"
+  optim: "paged_adamw_32bit"
+
+  lora:
+    r: 8
+    lora_alpha: 16
+    lora_dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+
+  logging_steps: 10
+  save_steps: 50
+  save_total_limit: 3
+
+  fp16: true
+
+  dataset: "sql-agent/svg-rendering-training"
+  train_split: "train"
+  max_samples: null
+
+  output_dir: "models/svg_renderer"
+
+# Data Preparation Configuration
+data_preparation:
+  # Input datasets
+  datasets:
+    - name: "spider"
+      source: "spider"
+      enabled: true
+    - name: "bird"
+      source: "bird"
+      enabled: true
+    - name: "sql-create-context"
+      source: "b-mc2/sql-create-context"
+      enabled: true
+    - name: "wikisql"
+      source: "wikisql"
+      enabled: true
+    - name: "synthetic_text_to_sql"
+      source: "gretelai/synthetic_text_to_sql"
+      enabled: true
+
+  # Validation
+  validate_sql: true
+  sql_dialect: "sqlite"
+
+  # Deduplication
+  deduplicate: true
+  dedup_strategy: "hash"  # hash or semantic
+
+  # Filtering
+  min_query_length: 10
+  max_query_length: 2048
+  min_context_length: 10
+  max_context_length: 4096
+
+  # Splitting
+  train_ratio: 0.8
+  validation_ratio: 0.1
+  test_ratio: 0.1
+
+  # Output
+  output_dataset_name: "sql-agent/sql-training-unified"
+  push_to_hub: false
+  output_dir: "data/sql-unified"
+
+# Hardware Configuration
+hardware:
+  gpu_device: 0
+  mixed_precision: "fp16"
+  gradient_checkpointing: true
+  max_memory_mb: 16384
+
+# Evaluation Configuration
+evaluation:
+  eval_strategy: "steps"
+  eval_steps: 100
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  save_strategy: "steps"
+  load_best_model_at_end: true
+
+# Reproducibility
+seed: 42
+deterministic: true
+
+# Wandb Integration (optional)
+wandb:
+  enabled: false
+  project: "sql-agent"
+  entity: null
+  notes: "Multi-model SQL Agent training"

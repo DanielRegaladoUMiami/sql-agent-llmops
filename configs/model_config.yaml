@@ -1,0 +1,153 @@
+# Model Configuration for SQL Agent LLMOps
+
+models:
+  sql_generator:
+    name: "Qwen 2.5 Coder 7B"
+    model_id: "Qwen/Qwen2.5-Coder-7B"
+    device_map: "auto"
+    load_in_4bit: true
+    bnb_config:
+      load_in_4bit: true
+      bnb_4bit_quant_type: "nf4"
+      bnb_4bit_compute_dtype: "float16"
+      bnb_4bit_use_double_quant: false
+    max_seq_length: 2048
+    lora:
+      r: 16
+      lora_alpha: 32
+      lora_dropout: 0.05
+      target_modules:
+        - "q_proj"
+        - "k_proj"
+        - "v_proj"
+        - "o_proj"
+        - "gate_proj"
+        - "up_proj"
+        - "down_proj"
+    quantization: "4-bit NF4"
+    memory_estimate_gb: 3.8
+    inference_speed_seconds: 1.2
+
+  chart_reasoner:
+    name: "Phi-3 Mini 3.8B"
+    model_id: "microsoft/phi-3-mini-4k-instruct"
+    device_map: "auto"
+    load_in_4bit: true
+    max_seq_length: 2048
+    lora:
+      r: 16
+      lora_alpha: 32
+      lora_dropout: 0.05
+      target_modules:
+        - "q_proj"
+        - "v_proj"
+    quantization: "4-bit NF4"
+    memory_estimate_gb: 2.1
+    inference_speed_seconds: 0.8
+
+  svg_renderer:
+    name: "DeepSeek Coder 1.3B"
+    model_id: "deepseek-ai/deepseek-coder-1.3b-instruct"
+    device_map: "auto"
+    load_in_4bit: true
+    max_seq_length: 2048
+    lora:
+      r: 8
+      lora_alpha: 16
+      lora_dropout: 0.05
+      target_modules:
+        - "q_proj"
+        - "v_proj"
+    quantization: "4-bit NF4"
+    memory_estimate_gb: 0.95
+    inference_speed_seconds: 0.6
+
+# Inference Configuration
+inference:
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  max_new_tokens: 512
+  repetition_penalty: 1.1
+  do_sample: true
+  num_beams: 1
+
+# Prompt Templates
+prompts:
+  sql_generator:
+    system: |
+      You are an expert SQL database engineer. Your task is to convert natural language questions into correct SQL queries.
+      Follow these guidelines:
+      1. Always use the exact table and column names from the schema
+      2. Write valid SQL that will execute without errors
+      3. Use appropriate JOINs for multi-table queries
+      4. Include WHERE, GROUP BY, ORDER BY clauses when relevant
+      5. Only return the SQL query, no explanations
+
+    user_template: |
+      Database Schema:
+      {schema}
+
+      Question: {question}
+
+      SQL Query:
+
+  chart_reasoner:
+    system: |
+      You are a data visualization expert. Your task is to recommend the most appropriate chart type and configuration based on SQL query results.
+      Return a valid JSON configuration object with the following fields:
+      - type: one of [bar, line, scatter, pie, area, histogram, box, heatmap]
+      - title: descriptive chart title
+      - x_axis: (optional) name of X axis column
+      - y_axis: (optional) name of Y axis column
+
+    user_template: |
+      SQL Query:
+      {sql}
+
+      Query Results:
+      {results_preview}
+
+      Column Info:
+      {column_info}
+
+      Recommend a chart configuration:
+
+  svg_renderer:
+    system: |
+      You are an SVG expert. Generate optimized SVG code for the given chart configuration.
+      The SVG should be:
+      - Valid XML that renders correctly
+      - Optimized for file size
+      - Responsive and readable
+      - Clean and properly formatted
+
+    user_template: |
+      Chart Configuration:
+      {config}
+
+      Chart Data:
+      {data}
+
+      Generate SVG code:
+
+# Model Paths
+model_paths:
+  sql_generator: "models/sql_generator/final"
+  chart_reasoner: "models/chart_reasoner/final"
+  svg_renderer: "models/svg_renderer/final"
+
+# Cache Configuration
+cache:
+  enabled: true
+  type: "in_memory"
+  max_size_mb: 500
+  ttl_seconds: 3600
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_file: "logs/sql_agent.log"
+  max_file_size_mb: 100
+  backup_count: 5

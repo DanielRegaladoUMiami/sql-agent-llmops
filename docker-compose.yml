@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  sql-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sql-agent-app
+    ports:
+      - "7860:7860"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - HF_HOME=/cache/huggingface
+      - TRANSFORMERS_CACHE=/cache/transformers
+      - LOG_LEVEL=INFO
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+      - ./models:/models
+      - cache_volume:/cache
+    # GPU support (requires docker with NVIDIA GPU support)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Uncomment for CPU-only mode
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '4'
+    #       memory: 16G
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - sql-agent-network
+
+  # Optional: Redis cache for session storage
+  redis:
+    image: redis:7-alpine
+    container_name: sql-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - sql-agent-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sql-agent-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+    networks:
+      - sql-agent-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    profiles:
+      - monitoring
+
+volumes:
+  cache_volume:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  sql-agent-network:
+    driver: bridge
+
+# Usage:
+#
+# Start the application:
+#   docker-compose up -d
+#
+# Start with monitoring:
+#   docker-compose --profile monitoring up -d
+#
+# View logs:
+#   docker-compose logs -f sql-agent
+#
+# Stop the application:
+#   docker-compose down
+#
+# Remove all data (careful!):
+#   docker-compose down -v
+#
+# Rebuild the image:
+#   docker-compose build --no-cache
+#
+# Access the application:
+#   http://localhost:7860
+#
+# Monitor with Prometheus:
+#   http://localhost:9090
+#
+# Access Redis:
+#   redis-cli -p 6379
+
+# Environment configuration for production:
+#
+# create a .env file with:
+#   HF_TOKEN=your_huggingface_token
+#   CUDA_VISIBLE_DEVICES=0
+#   LOG_LEVEL=INFO
+#
+# Then use:
+#   docker-compose --env-file .env up -d

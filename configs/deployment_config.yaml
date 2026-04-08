@@ -1,0 +1,199 @@
+# HuggingFace Spaces Deployment Configuration
+
+# Space Metadata
+space:
+  title: "SQL Agent"
+  description: "Multi-model SQL Agent for intelligent query generation, execution, and visualization"
+  sdk: "gradio"
+  sdk_version: "4.36.1"
+  python_version: "3.10"
+  app_file: "app.py"
+  space_type: "public"  # or "private"
+  tags:
+    - "sql"
+    - "database"
+    - "llm"
+    - "nlp"
+    - "visualization"
+    - "gradio"
+  thumbnail: ""  # URL to space thumbnail
+
+# Runtime Configuration
+runtime:
+  cpu_only: false
+  gpu_type: "gpu-t4"  # Options: "cpu", "gpu-t4", "gpu-a40"
+  persistent_storage: false
+  storage_size_gb: 0
+
+# Environment Variables
+environment:
+  HF_TOKEN: "${HF_TOKEN}"  # Automatically injected from secrets
+  MODEL_CACHE: "/models"
+  LOG_LEVEL: "INFO"
+  MAX_UPLOAD_SIZE_MB: "10"
+  QUERY_TIMEOUT_SECONDS: "30"
+  ENABLE_CACHE: "true"
+
+# Secrets (configured in Space Settings)
+secrets:
+  - name: "HF_TOKEN"
+    description: "HuggingFace API token for model downloads"
+    required: true
+  - name: "HF_SPACE_PERSISTENT_TOKEN"
+    description: "HuggingFace token for persistent storage"
+    required: false
+
+# Dependencies and Resources
+dependencies:
+  python_requirements: "app/requirements.txt"
+  system_packages:
+    - "libsqlite3-dev"
+    - "build-essential"
+
+# Resource Limits
+resources:
+  memory_limit_gb: 12
+  storage_limit_gb: 20
+  upload_limit_mb: 10
+  timeout_seconds: 300  # 5 minutes per request
+
+# Model Loading
+models:
+  sql_generator:
+    enabled: true
+    model_id: "Qwen/Qwen2.5-Coder-7B"
+    load_in_4bit: true
+    cache_dir: "/models/sql_generator"
+    fallback: "qwen-2.5-coder-7b-peft"  # Use LoRA if quantized not available
+
+  chart_reasoner:
+    enabled: true
+    model_id: "microsoft/phi-3-mini-4k-instruct"
+    load_in_4bit: true
+    cache_dir: "/models/chart_reasoner"
+    fallback: "phi-3-mini-peft"
+
+  svg_renderer:
+    enabled: true
+    model_id: "deepseek-ai/deepseek-coder-1.3b-instruct"
+    load_in_4bit: true
+    cache_dir: "/models/svg_renderer"
+    fallback: "deepseek-coder-1.3b-peft"
+
+# Gradio Configuration
+gradio:
+  server_name: "0.0.0.0"
+  server_port: 7860
+  share: false
+  debug: false
+  show_error: true
+  show_api: true
+  theme: "soft"
+  analytics_enabled: true
+
+# API Configuration
+api:
+  rate_limit_per_minute: 60
+  rate_limit_per_hour: 1000
+  enable_cors: true
+  cors_origins: ["*"]
+
+# Caching
+cache:
+  enabled: true
+  strategy: "lru"  # least recently used
+  max_size_mb: 500
+  ttl_seconds: 3600
+  clear_on_restart: false
+
+# Monitoring and Logging
+monitoring:
+  enabled: true
+  log_level: "INFO"
+  log_dir: "/logs"
+  max_log_file_size_mb: 100
+  keep_logs_days: 7
+  track_metrics: true
+  metrics_to_track:
+    - "inference_time"
+    - "memory_usage"
+    - "error_rate"
+    - "cache_hit_rate"
+
+# Health Checks
+health_check:
+  enabled: true
+  interval_seconds: 300
+  models_to_check:
+    - "sql_generator"
+    - "chart_reasoner"
+    - "svg_renderer"
+  restart_on_failure: true
+
+# Features
+features:
+  file_upload: true
+  schema_extraction: true
+  sql_generation: true
+  query_execution: true
+  chart_recommendation: true
+  svg_rendering: true
+  query_history: false  # Requires persistent storage
+  user_feedback: false  # Requires persistent storage
+
+# Security
+security:
+  enable_authentication: false
+  allowed_file_extensions:
+    - "csv"
+    - "xlsx"
+    - "json"
+    - "db"
+  max_file_size_mb: 10
+  sanitize_inputs: true
+  sql_injection_detection: true
+
+# Auto-scaling (HF Spaces Free tier doesn't support this)
+auto_scaling:
+  enabled: false
+  min_replicas: 1
+  max_replicas: 1
+  target_utilization_percent: 80
+
+# Startup Configuration
+startup:
+  download_models_on_startup: false  # Download models lazily
+  warmup_queries: 5
+  preload_models:
+    - "sql_generator"
+
+# Database Configuration (for persistent storage if enabled)
+database:
+  type: "sqlite"  # Could also use PostgreSQL with persistent storage
+  path: "/data/space.db"
+  enable_backups: false
+
+# Integration with HuggingFace Hub
+hub_integration:
+  repo_type: "space"
+  repo_name: "sql-agent"
+  private: false
+  push_strategy: "auto"  # auto, manual
+  push_interval_hours: 1
+
+# Maintenance
+maintenance:
+  scheduled_restart: false
+  restart_time_utc: "02:00"
+  gc_interval_hours: 1
+  cleanup_temp_files: true
+
+# Documentation
+documentation:
+  show_readme: true
+  readme_file: "app/README.md"
+  show_examples: true
+  example_queries:
+    - "SELECT COUNT(*) FROM users"
+    - "SELECT product, SUM(sales) FROM orders GROUP BY product"
+    - "SELECT * FROM customers WHERE country = 'USA'"
