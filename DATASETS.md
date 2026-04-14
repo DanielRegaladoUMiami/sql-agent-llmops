@@ -11,7 +11,7 @@ by reproducible UV scripts under `training/data_pipelines/`.
 | Model | Base checkpoint | Dataset | Status |
 |-------|-----------------|---------|--------|
 | **SQL Generator** | `Qwen/Qwen2.5-Coder-7B-Instruct` | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) | ✅ Published |
-| **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | `DanielRegaladoCardoso/chart-reasoning-mix-v1` | 🟠 In progress (nvBench loaded · OpenAI synth pending) |
+| **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) | ✅ Published |
 | **SVG Renderer** | `deepseek-ai/deepseek-coder-1.3b-instruct` | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) | ✅ Published |
 
 ---

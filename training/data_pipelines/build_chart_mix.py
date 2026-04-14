@@ -118,67 +118,22 @@ log = logging.getLogger("chart-mix")
 # ----------------------------------------------------------------------------
 
 STORYTELLING_PROMPT = """\
-You are an elite data visualization expert combining the principles of
-Edward Tufte (data-ink ratio), Cole Nussbaumer Knaflic ("Storytelling with
-Data"), and Stephen Few (perceptual encoding).
-
-Given a natural-language question and the structure of a SQL result set,
-design the IDEAL chart that answers the question with maximum clarity.
-
-Decision rules:
-
-1. chart_type — match the analytical intent:
-   - compare values across categories  → "bar" (horizontal if labels are long)
-   - trend over time                   → "line"
-   - distribution of one variable      → "histogram"
-   - distribution comparison           → "boxplot"
-   - correlation between two numerics  → "scatter"
-   - part-of-whole, ≤6 parts           → "donut"  (NEVER pie >6 slices)
-   - ranking                           → "bar" sorted desc
-   - flow / process                    → "sankey" or "funnel"
-   - geographic                        → "map"
-   - density of two numerics           → "heatmap"
-   - cumulative over time              → "area"
-
-2. Insight-driven title — write the title as the INSIGHT, not the topic.
-     bad : "Sales by Month"
-     good: "Sales grew 47% in Q4, driven by holiday demand"
-
-3. Smart defaults:
-   - sort: usually by value desc, unless ordinal/temporal
-   - color_strategy: "highlight" with one accent color, gray everything else
-   - annotations: call out the answer point/bar
-   - y_scale: "log" if range spans >2 orders of magnitude
-
-4. Avoid:
-   - 3D effects, ever
-   - pie charts with >6 slices
-   - dual y-axis unless absolutely necessary
-   - rainbow palettes
-   - alphabetical sorting when value sorting tells the story
-
-Output ONLY valid JSON conforming to this exact schema:
+You design chart specs that follow Tufte/Knaflic/Few principles.
+Given a question + SQL result columns, return ONE JSON object:
 
 {
-  "chart_type": "bar|line|scatter|donut|histogram|boxplot|area|heatmap|map|sankey|funnel",
-  "encoding": {
-    "x": "<column_name>",
-    "y": "<column_name>",
-    "color": "<column_name|null>",
-    "size": "<column_name|null>",
-    "facet": "<column_name|null>"
-  },
-  "title": "<insight-driven title>",
-  "subtitle": "<context, optional, may be null>",
-  "annotations": [{"target": "...", "text": "..."}],
-  "sort": {"by": "<column>", "order": "asc|desc|natural"},
-  "color_strategy": "highlight|categorical|sequential|diverging",
-  "highlight_value": "<value|null>",
-  "axis_format": {"y_scale": "linear|log", "y_label": "...|null", "x_label": "...|null"},
-  "rationale": "<2-sentence explanation of WHY this chart is the right call>"
+ "chart_type": one of bar|line|scatter|donut|histogram|boxplot|area|heatmap|sankey|funnel,
+ "encoding": {"x": <col>, "y": <col>, "color": <col|null>, "size": <col|null>, "facet": <col|null>},
+ "title": INSIGHT-DRIVEN ("Sales grew 47% in Q4" NOT "Sales by month"),
+ "sort": {"by": <col>, "order": "asc"|"desc"|"natural"},
+ "color_strategy": "highlight"|"categorical"|"sequential"|"diverging",
+ "rationale": one sentence explaining the choice
 }
 
-Return JSON only, no prose, no markdown fences.
+Rules:
+ categories→bar (horizontal if labels long), trend→line, parts≤6→donut,
+ correlation→scatter, ranking→bar desc. Never pie>6, no 3D, no rainbow.
+ Return JSON only, no prose.
 """
 
 
@@ -443,7 +398,7 @@ def synth_prepare(n: int, out_path: Path, lookup_path: Path, sql_repo: str = SQL
                         {"role": "system", "content": STORYTELLING_PROMPT},
                         {"role": "user", "content": user_content},
                     ],
-                    "max_tokens": 800,
+                    "max_tokens": 400,
                     "response_format": {"type": "json_object"},
                     "temperature": 0.3,
                 },
@@ -621,7 +576,20 @@ def split(examples: list[ChartExample]):
 
 
 def to_hf_dataset(examples: list[ChartExample]) -> Dataset:
-    return Dataset.from_list([e.to_dict() for e in examples])
+    """Serialize nested ``data_profile`` and ``chart_spec`` as JSON strings to
+    avoid Arrow type-inference errors caused by heterogeneous sample-row
+    values (str / int / float / date) across rows."""
+    rows = []
+    for e in examples:
+        rows.append({
+            "id": e.id,
+            "instruction": e.instruction,
+            "data_profile": json.dumps(e.data_profile, ensure_ascii=False, default=str),
+            "chart_spec": json.dumps(e.chart_spec, ensure_ascii=False, default=str),
+            "source": e.source,
+            "difficulty": e.difficulty,
+        })
+    return Dataset.from_list(rows)
 
 
 def build_card(stats: dict, repo: str) -> str:
