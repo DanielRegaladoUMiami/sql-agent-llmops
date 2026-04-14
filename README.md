@@ -9,7 +9,13 @@
 
 **🔗 A modular, multi-model SQL Agent with advanced orchestration, fine-tuned on open-source LLMs**
 
-[📚 Documentation](#-features) • [🚀 Quick Start](#-quick-start) • [🏗️ Architecture](#-architecture) • [📝 Training](#-how-training-works) • [🤝 Contributing](#-contributing)
+[📚 Documentation](#-features) • [🚀 Quick Start](#-quick-start) • [🏗️ Architecture](#-architecture) • [📦 Datasets](DATASETS.md) • [📝 Training](#-how-training-works) • [🤝 Contributing](#-contributing)
+
+### 📦 Training datasets (all public on HuggingFace)
+
+[![text-to-sql-mix-v2](https://img.shields.io/badge/🤗-text--to--sql--mix--v2-FFD21E?style=flat-square)](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2)
+[![chart-reasoning-mix-v1](https://img.shields.io/badge/🤗-chart--reasoning--mix--v1-F7A41D?style=flat-square)](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1)
+[![svg-chart-render-v1](https://img.shields.io/badge/🤗-svg--chart--render--v1-FFD21E?style=flat-square)](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1)
 
 </div>
 
@@ -168,55 +174,33 @@ sql-agent-llmops/
 
 ## 🧠 How Training Works
 
-### 1. SQL Generator: Qwen 2.5 Coder 7B (ZeroGPU)
-- **Dataset:** 3.3M examples from:
-  - WikiSQL (77K examples)
-  - Spider (10K complex queries)
-  - Synthetically generated SQL from public datasets
-- **Training Method:** Unsloth QLoRA fine-tuning
-  - 4x memory reduction vs standard LoRA
-  - Runs on Colab free tier (T4 GPU)
-  - ~8 hours to convergence
-- **Inference:** ZeroGPU on HuggingFace Spaces (free)
+All three models are fine-tuned with **[Unsloth](https://github.com/unslothai/unsloth)** (4-bit QLoRA) using training notebooks in [`training/notebooks/`](training/notebooks/). The full data pipeline is open-source in [`training/data_pipelines/`](training/data_pipelines/) — see [DATASETS.md](DATASETS.md) for the dataset index.
 
-```python
-# Example: Unsloth fine-tuning (pseudocode)
-from unsloth import FastLanguageModel
+### 1. SQL Generator — Qwen 2.5 Coder 7B
+- **Dataset:** [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) — **761,155 unique rows** (train 723k / val 19k / test 19k) combining 10 public text-to-SQL sources (Spider, WikiSQL, sql-create-context, Gretel, DuckDB-text2sql, NSText2SQL, etc.). Built with [`build_sql_mix.py`](training/data_pipelines/build_sql_mix.py).
+- **Method:** Unsloth QLoRA (rank 16, 4-bit base). Runs on Colab Pro A100 in ~5–8 h / epoch.
+- **Inference:** HuggingFace Spaces ZeroGPU.
 
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="Qwen/Qwen2.5-Coder-7B",
-    max_seq_length=2048,
-    load_in_4bit=True,
-)
-# LoRA + training setup...
-```
+### 2. Chart Reasoner — Phi-3 Mini 3.8B
+- **Dataset:** [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) — ~75 k rows combining **nvBench** (Tsinghua DB Group, 25 k real NL↔chart pairs) + **OpenAI gpt-4.1-nano synthesis** over `text-to-sql-mix-v2` (50 k pairs generated with a storytelling-expert system prompt distilling Tufte / Knaflic / Few principles). Built with [`build_chart_mix.py`](training/data_pipelines/build_chart_mix.py).
+- **Method:** Unsloth QLoRA on T4 free tier (~2–3 h / epoch).
+- **Output:** structured JSON spec (chart_type, encoding, insight-driven title, sort, color_strategy, annotations, rationale).
 
-### 2. Chart Reasoner: Phi-3 Mini 3.8B (CPU)
-- **Dataset:** 100K examples via free knowledge distillation
-  - Qwen 72B or Llama 70B as "teacher" models
-  - Free tier HuggingFace Inference API (~5M free tokens/month)
-  - Generates chart reasoning examples: "Given this data, the best chart is..."
-- **Training Method:** Distillation from teacher LLM outputs
-  - Outputs: `{"chart_type": "bar", "x": "product", "y": "sales", "color": "region"}`
-  - CPU-only training (no GPU required)
-  - ~2 hours to convergence
+### 3. SVG Renderer — DeepSeek Coder 1.3B
+- **Dataset:** [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) — ~25 k `(chart_spec → svg)` pairs: nvBench chart configs re-rendered with matplotlib's SVG backend + chart-shaped SVGs filtered from `umuthopeyildirim/svgen-500k`. Built with [`build_svg_mix.py`](training/data_pipelines/build_svg_mix.py).
+- **Method:** Unsloth QLoRA on T4 free tier (~1–2 h / epoch).
+- **Output:** inline SVG string.
 
-### 3. SVG Renderer: DeepSeek Coder 1.3B (CPU)
-- **Dataset:** 50K examples generated programmatically
-  - Plotly-to-SVG export pipeline
-  - Diverse configurations: bar, line, scatter, heatmap, etc.
-  - Synthetic labels and styling
-- **Training Method:** Supervised fine-tuning
-  - Input: chart config (JSON)
-  - Output: SVG markup (optimized for web)
-  - Extremely lightweight (1.3B parameters)
-  - ~1 hour to convergence
+### 💰 Cost breakdown
 
-**Cost Breakdown:**
-- SQL Generator: 1x T4 GPU (~$0.35/hour) x 8 hours = ~$3 (on Colab free = $0)
-- Chart Reasoner: Free tier HuggingFace API + CPU
-- SVG Renderer: CPU-only training
-- **Total one-time cost: $0** (all done on free tiers)
+| Piece | Compute | Cost |
+|-------|---------|------|
+| SQL Generator training | Colab Pro A100 (~6 h) | **$10/mo** |
+| Chart Reasoner training | Colab T4 free | **$0** |
+| SVG Renderer training | Colab T4 free | **$0** |
+| Chart dataset OpenAI synthesis | gpt-4.1-nano Batch API (50 k) | **~$2.50** |
+| **End-to-end training** | | **~$12** |
+| Inference hosting | HF Spaces ZeroGPU (free tier) | **$0** |
 
 ---
 
