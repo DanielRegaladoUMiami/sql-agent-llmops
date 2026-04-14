@@ -11,7 +11,7 @@ by reproducible UV scripts under `training/data_pipelines/`.
 | Model | Base checkpoint | Dataset | Status |
 |-------|-----------------|---------|--------|
 | **SQL Generator** | `Qwen/Qwen2.5-Coder-7B-Instruct` | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) | ✅ Published |
-| **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | `DanielRegaladoCardoso/chart-reasoning-mix-v1` | 🟡 Planned |
+| **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | `DanielRegaladoCardoso/chart-reasoning-mix-v1` | 🟠 In progress (nvBench loaded · OpenAI synth pending) |
 | **SVG Renderer** | `deepseek-ai/deepseek-coder-1.3b-instruct` | `DanielRegaladoCardoso/svg-chart-render-v1` | 🟡 Planned |
 
 ---
@@ -63,25 +63,33 @@ hf jobs uv run --flavor cpu-basic --timeout 2h \
 
 ---
 
-## 2️⃣ Chart Reasoner — `chart-reasoning-mix-v1` (planned)
+## 2️⃣ Chart Reasoner — `chart-reasoning-mix-v1` (in progress)
 
-**Goal**: fine-tune Phi-3 Mini to map `(question, SQL result set)` → chart config
-(Vega-Lite / Plotly JSON).
+**Goal**: fine-tune Phi-3 Mini to map `(question, SQL result schema)` → **storytelling-grade chart specification** (chart type, encoding, insight-driven title, sort, color strategy, annotations, rationale).
 
-### Candidate sources to combine
+- **📝 Build script**: [`training/data_pipelines/build_chart_mix.py`](training/data_pipelines/build_chart_mix.py) — multi-stage UV pipeline (`nvbench` → `synth-prepare` → `synth-submit` → `synth-fetch` → `combine-push`)
 
-| Source | Rows | Why |
-|--------|------|-----|
-| [`HuggingFaceM4/ChartQA`](https://huggingface.co/datasets/HuggingFaceM4/ChartQA) | 32k | Question-answering over charts with gold chart types |
-| [`vis-nl2vis/nvBench`](https://github.com/TsinghuaDatabaseGroup/nvBench) | 25k | NL → viz SQL + target chart type (`bar`, `line`, `pie`, `scatter`) |
-| [`ahmed-masry/ChartInstruct`](https://huggingface.co/datasets/ahmed-masry/ChartInstruct) | 191k | Instruction-tuning over charts |
-| [`plotqa`](https://huggingface.co/datasets/niteshpanda/plotqa) | ~200k | Questions over scientific plots |
+### Sources
 
-### Plan
+| Source | Rows | Status |
+|--------|------|--------|
+| [nvBench (Tsinghua DB Group)](https://github.com/TsinghuaDatabaseGroup/nvBench) | **25,752** | ✅ Loaded · 7,247 entries × ~3.5 NL paraphrases each |
+| OpenAI gpt-4.1-nano synthesis (over `text-to-sql-mix-v2`) | ~50,000 (target) | 🟠 Pending (Batch API submit) |
 
-1. Download candidate sources; normalize to a common `(question, data_sample, chart_type, chart_config)` schema.
-2. Where a source lacks structured `chart_config`, distill it with Claude / GPT-4 from the raw chart image + question (Chart Reasoner is trained via **knowledge distillation**).
-3. Push to HF as `DanielRegaladoCardoso/chart-reasoning-mix-v1`.
+### Storytelling principles baked in
+
+The system prompt for synthesis distills:
+- **Edward Tufte** — data-ink ratio, integrity
+- **Cole Nussbaumer Knaflic** — clutter elimination, action-driven titles
+- **Stephen Few** — perceptual encoding
+
+Each synthesized example includes: `chart_type`, full `encoding`, **insight-driven title**, smart `sort`, `color_strategy` (highlight/categorical/sequential/diverging), `annotations`, and a `rationale` explaining the choice.
+
+### Estimated cost
+
+- nvBench loader: $0
+- 50k synth via gpt-4.1-nano Batch API: **~$2.50** (50% off vs live API)
+- Total: **~$2.50**
 
 ---
 
