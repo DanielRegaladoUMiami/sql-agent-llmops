@@ -12,7 +12,7 @@ by reproducible UV scripts under `training/data_pipelines/`.
 |-------|-----------------|---------|--------|
 | **SQL Generator** | `Qwen/Qwen2.5-Coder-7B-Instruct` | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) | ✅ Published |
 | **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | `DanielRegaladoCardoso/chart-reasoning-mix-v1` | 🟠 In progress (nvBench loaded · OpenAI synth pending) |
-| **SVG Renderer** | `deepseek-ai/deepseek-coder-1.3b-instruct` | `DanielRegaladoCardoso/svg-chart-render-v1` | 🟡 Planned |
+| **SVG Renderer** | `deepseek-ai/deepseek-coder-1.3b-instruct` | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) | ✅ Published |
 
 ---
 
@@ -93,24 +93,40 @@ Each synthesized example includes: `chart_type`, full `encoding`, **insight-driv
 
 ---
 
-## 3️⃣ SVG Renderer — `svg-chart-render-v1` (planned)
+## 3️⃣ SVG Renderer — `svg-chart-render-v1` ✅
 
-**Goal**: fine-tune DeepSeek Coder 1.3B to map `chart_config` → `SVG` code.
+- **🔗 Hub**: https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1
+- **📝 Build script**: [`training/data_pipelines/build_svg_mix.py`](training/data_pipelines/build_svg_mix.py)
+- **🧮 Schema**: `id · chart_spec (JSON str) · svg_code · source · metadata (JSON str)`
+- **⚖️ License**: Apache-2.0 on pipeline; row content per source
 
-### Candidate sources
+### Sources
 
-| Source | Rows | Why |
-|--------|------|-----|
-| [`starvector/svg-stack`](https://huggingface.co/datasets/starvector/svg-stack) | ~2M | Giant SVG corpus scraped from websites |
-| [`umuthopeyildirim/svgen-500k`](https://huggingface.co/datasets/umuthopeyildirim/svgen-500k) | 500k | Clean, rendered SVGs |
-| [`yuchenlin/svg-bench`](https://huggingface.co/datasets/yuchenlin/svg-bench) | ~10k | Benchmark (eval only) |
+| Source | Rows | Strategy |
+|--------|------|----------|
+| `synth-matplotlib` | ~10.5k | nvBench chart configs re-rendered with matplotlib (Agg/SVG backend). Perfect (spec, svg) pairs. 4 chart types: bar, line, scatter, donut. |
+| `svgen500k-*` (filtered) | ~15k | [`umuthopeyildirim/svgen-500k`](https://huggingface.co/datasets/umuthopeyildirim/svgen-500k) filtered to chart-shaped SVGs (multi-element, has `<rect>`/`<line>`/`<g>`). |
 
-### Plan
+### Pipeline
 
-1. Filter `svg-stack` to **chart-like SVGs** (contains `<rect>`, `<line>`, `<circle>` patterns typical of charts).
-2. For each SVG, **reverse-engineer a minimal chart_config** describing it (Plotly / Vega-Lite).
-3. The training pair becomes `chart_config → svg_code`.
-4. Push to HF as `DanielRegaladoCardoso/svg-chart-render-v1`.
+```bash
+# 1. Render nvBench charts to SVG (3 title augmentations per entry)
+uv run training/data_pipelines/build_svg_mix.py synth-charts --max-per-entry 3
+
+# 2. Filter svgen-500k to chart-like SVGs (streaming)
+uv run training/data_pipelines/build_svg_mix.py svgen --max 15000
+
+# 3. Combine + dedup + split + push to HF
+uv run training/data_pipelines/build_svg_mix.py combine-push \
+    --inputs data/svg_synth.jsonl data/svg_svgen.jsonl --push
+```
+
+### Storage format note
+
+`chart_spec` and `metadata` are stored as JSON strings (not dicts) in the parquet.
+Parse with `json.loads(row["chart_spec"])` after `load_dataset`. This avoids
+Arrow type-inference errors from mixed x-value types (str / int / float / date)
+across rows.
 
 ---
 
