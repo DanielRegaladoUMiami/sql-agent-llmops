@@ -35,39 +35,57 @@ SQL Agent LLMOps is a **production-ready, open-source SQL Agent** that orchestra
 ## 🏗️ Architecture
 
 ```mermaid
-graph TD
-    A["📤 User Data Upload"] -->|CSV/JSON| B["📊 Schema Extractor"]
-    B -->|Extract Schema| C["🔍 RAG Indexing<br/>ChromaDB In-Memory"]
-    
-    D["💬 Natural Language Question"] -->|User Input| E["🔎 RAG Retrieval<br/>Semantic Search"]
-    C -->|Retrieved Schema| E
-    
-    E -->|Question + Context| F["🎯 Orchestrator<br/>Decision Engine"]
-    
-    F -->|Generate SQL| G["⚙️ Model 1: SQL Generator<br/>Qwen 2.5 Coder 7B<br/>ZeroGPU"]
-    F -->|Generate Chart Config| H["📈 Model 2: Chart Reasoner<br/>Phi-3 Mini 3.8B<br/>CPU"]
-    F -->|Render Visualization| I["🎨 Model 3: SVG Renderer<br/>DeepSeek Coder 1.3B<br/>CPU"]
-    
-    G -->|SQL Query| J["🗄️ Execute Query"]
-    J -->|Results| H
-    H -->|Chart Spec| I
-    
-    I -->|SVG Output| K["✅ Final Visualization"]
-    I -->|Fallback| L["📊 Plotly<br/>Programmatic Chart"]
-    L --> K
-    
-    style A fill:#E3F2FD
-    style B fill:#F3E5F5
-    style C fill:#FCE4EC
-    style D fill:#E3F2FD
-    style E fill:#F3E5F5
-    style F fill:#FFF3E0
-    style G fill:#E8F5E9
-    style H fill:#E8F5E9
-    style I fill:#E8F5E9
-    style J fill:#F1F8E9
-    style K fill:#C8E6C9
-    style L fill:#FFF9C4
+flowchart TB
+    subgraph INPUT["📥 User Input"]
+        U1["CSV / JSON upload"]
+        U2["Natural-language question<br/>e.g. 'Top products by revenue last quarter?'"]
+    end
+
+    subgraph INGEST["🧩 Ingest & Retrieval"]
+        direction LR
+        SX["🔎 Schema Extractor<br/>sqlglot"]
+        RAG["🧠 Schema RAG<br/>ChromaDB in-memory"]
+        DB[("🗄️ DuckDB<br/>in-memory")]
+        SX --> RAG
+        SX --> DB
+    end
+
+    ORCH{{"🎯 Orchestrator<br/>routes each step"}}
+
+    subgraph MODELS["🤖 Fine-tuned Specialist Models (QLoRA via Unsloth)"]
+        direction TB
+        M1["⚡ SQL Generator<br/>Qwen 2.5 Coder 7B<br/>🤗 text-to-sql-mix-v2 (761k rows)"]
+        M2["📊 Chart Reasoner<br/>Phi-3 Mini 3.8B<br/>🤗 chart-reasoning-mix-v1 (35k rows)<br/>Tufte · Knaflic · Few"]
+        M3["🎨 SVG Renderer<br/>DeepSeek Coder 1.3B<br/>🤗 svg-chart-render-v1 (25k rows)"]
+    end
+
+    OUT["✅ Insight-driven Chart<br/>inline SVG in the browser"]
+    FB["📉 Plotly fallback"]
+
+    U1 --> SX
+    U2 --> ORCH
+    RAG --> ORCH
+    ORCH --> M1
+    M1 -->|SQL query| DB
+    DB -->|result set| M2
+    M2 -->|chart spec JSON| M3
+    M3 -->|SVG code| OUT
+    M3 -.->|on render failure| FB
+    FB --> OUT
+
+    classDef input fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
+    classDef ingest fill:#FCE4EC,stroke:#C2185B,color:#880E4F
+    classDef orch fill:#FFF3E0,stroke:#E65100,color:#BF360C
+    classDef model fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+    classDef output fill:#C8E6C9,stroke:#2E7D32,color:#1B5E20
+    classDef fallback fill:#FFF9C4,stroke:#F57F17,color:#E65100
+
+    class U1,U2 input
+    class SX,RAG,DB ingest
+    class ORCH orch
+    class M1,M2,M3 model
+    class OUT output
+    class FB fallback
 ```
 
 ---
