@@ -32,45 +32,37 @@ SQL Agent LLMOps is a **production-ready, open-source SQL Agent** that orchestra
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
-flowchart TB
-    subgraph INPUT["📥 User Input"]
-        U1["CSV / JSON upload"]
-        U2["Natural-language question<br/>e.g. 'Top products by revenue last quarter?'"]
-    end
+flowchart LR
+    U1["CSV / JSON"]
+    U2["NL question"]
 
-    subgraph INGEST["🧩 Ingest & Retrieval"]
-        direction LR
-        SX["🔎 Schema Extractor<br/>sqlglot"]
-        RAG["🧠 Schema RAG<br/>ChromaDB in-memory"]
-        DB[("🗄️ DuckDB<br/>in-memory")]
-        SX --> RAG
-        SX --> DB
-    end
+    SX["Schema Extractor"]
+    RAG["Schema RAG<br/>(ChromaDB)"]
+    DB[("DuckDB<br/>in-memory")]
 
-    ORCH{{"🎯 Orchestrator<br/>routes each step"}}
+    ORCH{{"Orchestrator"}}
 
-    subgraph MODELS["🤖 Fine-tuned Specialist Models (QLoRA via Unsloth)"]
-        direction TB
-        M1["⚡ SQL Generator<br/>Qwen 2.5 Coder 7B<br/>🤗 text-to-sql-mix-v2 (761k rows)"]
-        M2["📊 Chart Reasoner<br/>Phi-3 Mini 3.8B<br/>🤗 chart-reasoning-mix-v1 (35k rows)<br/>Tufte · Knaflic · Few"]
-        M3["🎨 SVG Renderer<br/>DeepSeek Coder 1.3B<br/>🤗 svg-chart-render-v1 (25k rows)"]
-    end
+    M1["SQL Generator<br/>Qwen 2.5 Coder 7B<br/>text-to-sql-mix-v2"]
+    M2["Chart Reasoner<br/>Phi-3 Mini 3.8B<br/>chart-reasoning-mix-v1"]
+    M3["SVG Renderer<br/>DeepSeek Coder 1.3B<br/>svg-chart-render-v1"]
 
-    OUT["✅ Insight-driven Chart<br/>inline SVG in the browser"]
-    FB["📉 Plotly fallback"]
+    OUT["Final Chart<br/>inline SVG"]
+    FB["Plotly fallback"]
 
     U1 --> SX
+    SX --> RAG
+    SX --> DB
     U2 --> ORCH
     RAG --> ORCH
     ORCH --> M1
-    M1 -->|SQL query| DB
+    M1 -->|SQL| DB
     DB -->|result set| M2
-    M2 -->|chart spec JSON| M3
-    M3 -->|SVG code| OUT
-    M3 -.->|on render failure| FB
+    M2 -->|chart spec| M3
+    M3 --> OUT
+    M3 -.->|on failure| FB
     FB --> OUT
 
     classDef input fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
@@ -87,6 +79,10 @@ flowchart TB
     class OUT output
     class FB fallback
 ```
+
+Flow: user uploads data and asks a question → Orchestrator → SQL Generator emits SQL → DuckDB executes → Chart Reasoner designs a chart spec → SVG Renderer emits inline SVG. If SVG generation fails, Plotly renders the chart programmatically from the spec.
+
+All three specialist models are fine-tuned via Unsloth QLoRA on datasets we built and published to HuggingFace — see [DATASETS.md](DATASETS.md).
 
 ---
 
