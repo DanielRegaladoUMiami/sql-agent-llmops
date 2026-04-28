@@ -610,10 +610,9 @@ def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], Non
         return
 
     # First yield: show the question with progress indicator
-    yield _conversation_html(history, in_progress=(question, "Loading models (first query takes ~60s)…")), "", history
+    yield _conversation_html(history, in_progress=(question, "Generating SQL…")), "", history
 
     try:
-        # Run the full pipeline
         result = _gpu_process(question)
     except Exception as e:
         logger.exception("ask failed")

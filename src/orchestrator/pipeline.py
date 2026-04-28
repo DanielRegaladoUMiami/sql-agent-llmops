@@ -60,16 +60,13 @@ class SQLAgentOrchestrator:
         return self.executor.get_sample(table, n)
 
     # ----------------------------------------------------------- pipeline
-    def ensure_models_loaded(self) -> None:
-        if not self.sql_generator.is_loaded:
-            self.sql_generator.load()
-        if not self.chart_reasoner.is_loaded:
-            self.chart_reasoner.load()
-        if not self.svg_renderer.is_loaded:
-            self.svg_renderer.load()
-
     def process(self, question: str) -> Dict[str, Any]:
-        """Run the full pipeline for one question."""
+        """
+        Run the full pipeline for one question.
+
+        Models are loaded and unloaded sequentially to keep peak VRAM low
+        (only one of the 3 models lives in GPU at a time).
+        """
         result: Dict[str, Any] = {
             "question": question,
             "sql": None,
@@ -86,28 +83,37 @@ class SQLAgentOrchestrator:
                 result["error"] = "No data loaded. Upload a CSV/JSON first."
                 return result
 
-            self.ensure_models_loaded()
-
-            # 1) SQL
+            # 1) SQL — load Qwen, generate, unload
+            logger.info("Step 1/4: SQL generation")
+            self.sql_generator.load()
             sql = self.sql_generator.generate(question=question, schema=schema)
+            self.sql_generator.unload()
             result["sql"] = sql
+
             if not self.executor.validate_query(sql):
                 result["error"] = f"Generated SQL is invalid:\n{sql}"
                 return result
 
-            # 2) Execute
+            # 2) Execute (CPU-only, no model needed)
+            logger.info("Step 2/4: SQL execution")
             rows, cols = self.executor.execute(sql)
             result["results"] = rows
             result["columns"] = cols
 
-            # 3) Chart spec
+            # 3) Chart spec — load Phi-3, generate, unload
+            logger.info("Step 3/4: chart reasoning")
+            self.chart_reasoner.load()
             spec = self.chart_reasoner.generate(
                 question=question, sql=sql, results=rows, columns=cols,
             )
+            self.chart_reasoner.unload()
             result["chart_spec"] = spec
 
-            # 4) Render
+            # 4) Render — load DeepSeek (or Plotly fallback), render, unload
+            logger.info("Step 4/4: SVG rendering")
+            self.svg_renderer.load()
             svg = self.svg_renderer.generate(spec, rows)
+            self.svg_renderer.unload()
             result["svg"] = svg
 
             return result
@@ -115,6 +121,13 @@ class SQLAgentOrchestrator:
         except Exception as e:
             logger.exception("Pipeline failed")
             result["error"] = str(e)
+            # Best-effort cleanup so a failure doesn't leak a model in VRAM
+            for m in (self.sql_generator, self.chart_reasoner, self.svg_renderer):
+                try:
+                    if m.is_loaded:
+                        m.unload()
+                except Exception:
+                    pass
             return result
 
     def reset(self) -> None:

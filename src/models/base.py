@@ -55,10 +55,19 @@ class BaseModel(ABC):
         pass
 
     def unload(self) -> None:
-        """Unload model to free memory."""
+        """Unload model and free GPU VRAM."""
         self.model = None
         self.tokenizer = None
         self.is_loaded = False
+        try:
+            import gc
+            import torch
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+        except Exception:
+            pass
         logger.info(f"Model {self.model_name} unloaded")
 
     def _validate_loaded(self) -> None:
