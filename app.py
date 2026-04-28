@@ -495,36 +495,45 @@ def _turn_html_complete(result: dict) -> str:
 
 
 def _conversation_html(history: list[dict], in_progress: tuple[str, str] | None = None) -> str:
+    """Conversation HTML reacts to: data loaded? history? in-progress?"""
+    has_data = bool(get_agent().list_tables())
+    has_turns = bool(history) or in_progress is not None
+
+    if not has_data and not has_turns:
+        return _empty_state_html()
+    if has_data and not has_turns:
+        return _ready_state_html()
+
     out = "".join(_turn_html_complete(t) for t in history)
     if in_progress:
         out += _turn_html_progress(in_progress[0], in_progress[1])
-    if not out:
-        return _empty_state_html()
     return out
 
 
 def _empty_state_html() -> str:
-    suggestions = _suggestions_html([
-        "Try the Titanic example below",
-        "Or upload your own CSV/JSON above",
-    ])
     return (
         '<div class="empty">'
-        '<div class="empty-title">No data yet</div>'
-        '<div class="empty-sub">Upload a CSV, JSON, Parquet or Excel file, or load the demo dataset.</div>'
-        '<div class="example-grid">'
-        '<div class="example-card" onclick="document.getElementById(\'load_demo_btn\').click()">'
-        '<div class="example-card-title">Titanic (demo)</div>'
-        '<div class="example-card-meta">20 passengers · 7 columns · click to load</div>'
+        '<div class="empty-title">No data loaded yet</div>'
+        '<div class="empty-sub">Drop a CSV, JSON, Parquet or Excel file above, '
+        'or click <strong>Load demo dataset</strong> to play with sample data.</div>'
         '</div>'
-        '</div>'
+    )
+
+
+def _ready_state_html() -> str:
+    """Shown when data is loaded but no queries asked yet."""
+    return (
+        '<div class="empty">'
+        '<div class="empty-title">Ready</div>'
+        '<div class="empty-sub">Ask a question above, or try one of these:</div>'
+        f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
         '</div>'
     )
 
 
 # ============================================================ EVENT HANDLERS
 def on_upload(file) -> Tuple[str, str, list]:
-    """Register an uploaded file and clear history."""
+    """Register an uploaded file and clear history. Conversation re-renders to ready state."""
     if file is None:
         return "", _conversation_html([]), []
     agent = get_agent()
@@ -535,36 +544,29 @@ def on_upload(file) -> Tuple[str, str, list]:
         rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
         cols = len(agent.executor.get_table_schema(table))
         chip = _file_chip_html(path.name, rows, cols)
-        # Show suggestions based on the table
-        intro = (
-            f'<div class="empty-title" style="margin-top:30px">Ready to query <code style="font-family:var(--font-mono);font-size:13px">{table}</code></div>'
-            f'<div class="empty-sub">Try a question or one of these:</div>'
-            f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
-        )
-        return chip, intro, []
+        return chip, _conversation_html([]), []
     except Exception as e:
         logger.exception("upload failed")
         return "", f'<div class="turn-error">Could not load file: {e}</div>', []
 
 
 def on_load_demo() -> Tuple[str, str, list]:
-    """Load the embedded Titanic example."""
+    """Load the embedded Titanic example and re-render to ready state."""
     agent = get_agent()
     agent.reset()
-    p = _make_titanic_csv()
-    table = agent.load_data(p)
-    rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
-    cols = len(agent.executor.get_table_schema(table))
-    chip = _file_chip_html("titanic.csv (demo)", rows, cols)
-    intro = (
-        f'<div class="empty-title" style="margin-top:30px">Loaded <code style="font-family:var(--font-mono);font-size:13px">{table}</code></div>'
-        f'<div class="empty-sub">Try one of these questions:</div>'
-        f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
-    )
-    return chip, intro, []
+    try:
+        p = _make_titanic_csv()
+        table = agent.load_data(p)
+        rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+        cols = len(agent.executor.get_table_schema(table))
+        chip = _file_chip_html("titanic.csv (demo)", rows, cols)
+        return chip, _conversation_html([]), []
+    except Exception as e:
+        logger.exception("demo load failed")
+        return "", f'<div class="turn-error">Could not load demo: {e}</div>', []
 
 
-@spaces.GPU(duration=180)
+@spaces.GPU(duration=120)
 def _gpu_process(question: str) -> dict:
     """The GPU-bound call. Models initialize lazily inside this scope."""
     agent = get_agent()
