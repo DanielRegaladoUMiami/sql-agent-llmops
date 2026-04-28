@@ -19,31 +19,7 @@ sys.path.insert(0, str(ROOT))
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger(__name__)
 
-# CRITICAL: pre-download model weights at module-load time (CPU phase, no GPU
-# needed). When @spaces.GPU is later invoked, from_pretrained() finds the
-# files already cached and just moves them to GPU — that loads in ~10s
-# instead of 30-60s, which keeps us inside the ZeroGPU quota window.
-MODEL_REPOS = [
-    "DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora",
-    "DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora",
-    "DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora",
-]
-
-try:
-    from huggingface_hub import snapshot_download
-    for repo in MODEL_REPOS:
-        try:
-            logger.info(f"Pre-downloading {repo}...")
-            snapshot_download(repo)
-            logger.info(f"  cached")
-        except Exception as e:
-            logger.warning(f"  pre-download failed (will retry on first use): {e}")
-except Exception as e:
-    logger.warning(f"snapshot_download unavailable: {e}")
-
 import gradio as gr  # noqa: E402
-
-from src.orchestrator.pipeline import SQLAgentOrchestrator  # noqa: E402
 
 try:
     import spaces  # type: ignore
@@ -59,6 +35,20 @@ except ImportError:
             return decorator
 
     spaces = _SpacesShim()  # type: ignore
+
+# CRITICAL: load all 3 models on cuda at module level per ZeroGPU best
+# practice. PyTorch CUDA emulation handles this when no real GPU is present;
+# inside @spaces.GPU calls, the real GPU is used and inference is fast.
+logger.info("Loading models at module level...")
+from src.models.sql_generator import SQLGenerator  # noqa: E402
+from src.models.chart_reasoner import ChartReasoner  # noqa: E402
+from src.models.svg_renderer import SVGRenderer  # noqa: E402
+from src.orchestrator.pipeline import SQLAgentOrchestrator  # noqa: E402
+
+_SQL_GEN = SQLGenerator()
+_CHART_REASONER = ChartReasoner()
+_SVG_RENDERER = SVGRenderer()
+logger.info("All models loaded")
 
 
 # ============================================================ THEME / CSS
@@ -416,7 +406,7 @@ _AGENT: Optional[SQLAgentOrchestrator] = None
 def get_agent() -> SQLAgentOrchestrator:
     global _AGENT
     if _AGENT is None:
-        _AGENT = SQLAgentOrchestrator()
+        _AGENT = SQLAgentOrchestrator(_SQL_GEN, _CHART_REASONER, _SVG_RENDERER)
     return _AGENT
 
 
@@ -599,9 +589,9 @@ def on_load_demo() -> Tuple[str, str, list]:
         return "", f'<div class="turn-error">Could not load demo: {e}</div>', []
 
 
-@spaces.GPU(duration=120)
+@spaces.GPU(duration=60)
 def _gpu_process(question: str) -> dict:
-    """The GPU-bound call. Models initialize lazily inside this scope."""
+    """Inference only — models already on cuda from module-level loading."""
     agent = get_agent()
     return agent.process(question)
 

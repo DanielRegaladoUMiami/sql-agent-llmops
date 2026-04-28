@@ -1,8 +1,7 @@
 """
-Chart Reasoner: query results -> chart spec via the trained Phi-3 Mini LoRA.
+Chart Reasoner: query results -> chart spec via the Phi-3 Mini LoRA.
 
-Uses the adapter-only repo so the LoRA loads on top of the original
-Phi-3-mini-4k-instruct base, keeping Hub downloads small.
+Model loaded at root module level (ZeroGPU best practice).
 """
 
 import json
@@ -10,7 +9,8 @@ import logging
 import re
 from typing import Any, Dict, List
 
-from src.models.base import BaseModel
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -22,51 +22,39 @@ SYSTEM_PROMPT = (
     "Return only valid JSON, no commentary."
 )
 
+DEFAULT_MODEL = "DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora"
 
-class ChartReasoner(BaseModel):
+
+class ChartReasoner:
     """Generate chart specs from SQL result sets."""
-
-    DEFAULT_MERGED = "DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora"
 
     def __init__(
         self,
-        hf_model: str = DEFAULT_MERGED,
+        hf_model: str = DEFAULT_MODEL,
         temperature: float = 0.0,
         max_new_tokens: int = 300,
     ) -> None:
-        super().__init__(model_name="chart-reasoner")
         self.hf_model = hf_model
         self.temperature = temperature
         self.max_new_tokens = max_new_tokens
 
-    def load(self) -> None:
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        import torch
-
-        logger.info(f"Loading chart reasoner: {self.hf_model}")
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        dtype = torch.bfloat16 if device == "cuda" else torch.float32
-
+        logger.info(f"Loading chart reasoner at module level: {self.hf_model}")
         self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model)
         self.model = AutoModelForCausalLM.from_pretrained(
             self.hf_model,
-            torch_dtype=dtype,
-            device_map=device,
+            torch_dtype=torch.bfloat16,
+            device_map="cuda",
         )
         self.model.eval()
-        self.is_loaded = True
-        logger.info(f"Chart reasoner loaded on {device}")
+        logger.info("Chart reasoner ready")
 
-    def generate(  # type: ignore[override]
+    def generate(
         self,
         question: str,
         sql: str,
         results: List[Dict[str, Any]],
         columns: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        self._validate_loaded()
-        import torch
-
         sample = results[:5]
         col_names = [c["name"] for c in columns]
         user_content = (
@@ -102,18 +90,14 @@ class ChartReasoner(BaseModel):
     def _parse_spec(
         self, text: str, columns: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        # Try to extract a JSON object from the response
         match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", text, re.DOTALL)
         if not match:
-            logger.warning("No JSON found in chart reasoner output")
             return self._fallback_spec(columns)
         try:
             spec = json.loads(match.group(0))
-        except json.JSONDecodeError as e:
-            logger.warning(f"Chart spec JSON invalid: {e}")
+        except json.JSONDecodeError:
             return self._fallback_spec(columns)
 
-        # Normalize
         return {
             "chart_type": spec.get("chart_type", "bar").lower(),
             "title": spec.get("title", "Result"),
@@ -124,7 +108,6 @@ class ChartReasoner(BaseModel):
         }
 
     def _fallback_spec(self, columns: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Heuristic fallback when the model output can't be parsed."""
         if not columns:
             return {"chart_type": "table", "title": "Result"}
         if len(columns) == 1:

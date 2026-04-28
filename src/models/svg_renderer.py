@@ -1,19 +1,16 @@
 """
 SVG Renderer: chart spec + data -> inline SVG.
 
-Strategy:
-1. Try the trained DeepSeek-Coder-1.3B SVG renderer model.
-2. If its output isn't a valid SVG, fall back to the Plotly themed renderer.
-
-Either path goes through `apply_theme()` to enforce a consistent
-Apple/Claude visual: monochrome with one warm accent, thin strokes,
-SF font stack, responsive viewBox.
+Model loaded at root module level (ZeroGPU best practice). If the model
+output isn't a valid SVG, falls back to themed Plotly.
 """
 
 import logging
 from typing import Any, Dict, List
 
-from src.models.base import BaseModel
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from src.visualization.plotly_fallback import PlotlyRenderer
 from src.visualization.svg_theme import apply_theme, is_renderable_svg
 
@@ -26,11 +23,11 @@ SYSTEM_PROMPT = (
     "minimalist style. Return only the SVG, starting with <svg."
 )
 
+DEFAULT_MODEL = "DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora"
 
-class SVGRenderer(BaseModel):
+
+class SVGRenderer:
     """Render a chart spec to inline SVG."""
-
-    DEFAULT_MODEL = "DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora"
 
     def __init__(
         self,
@@ -38,42 +35,31 @@ class SVGRenderer(BaseModel):
         temperature: float = 0.2,
         max_new_tokens: int = 1500,
     ) -> None:
-        super().__init__(model_name="svg-renderer")
         self.hf_model = hf_model
         self.temperature = temperature
         self.max_new_tokens = max_new_tokens
         self._plotly = PlotlyRenderer()
 
-    def load(self) -> None:
-        from transformers import AutoModelForCausalLM, AutoTokenizer
-        import torch
-
-        logger.info(f"Loading SVG renderer: {self.hf_model}")
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        dtype = torch.bfloat16 if device == "cuda" else torch.float32
-
+        logger.info(f"Loading SVG renderer at module level: {self.hf_model}")
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model)
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.hf_model,
-                torch_dtype=dtype,
-                device_map=device,
+                torch_dtype=torch.bfloat16,
+                device_map="cuda",
             )
             self.model.eval()
-            self.is_loaded = True
-            logger.info(f"SVG renderer loaded on {device}")
+            logger.info("SVG renderer ready")
         except Exception as e:
-            logger.warning(f"SVG model load failed ({e}); will use Plotly fallback")
+            logger.warning(f"SVG model load failed ({e}); will use Plotly fallback only")
             self.model = None
             self.tokenizer = None
-            self.is_loaded = True  # we can still render via Plotly
 
-    def generate(  # type: ignore[override]
+    def generate(
         self,
         chart_spec: Dict[str, Any],
         data: List[Dict[str, Any]],
     ) -> str:
-        # 1) Try trained model
         if self.model is not None and self.tokenizer is not None:
             try:
                 svg = self._generate_model(chart_spec, data)
@@ -83,7 +69,6 @@ class SVGRenderer(BaseModel):
             except Exception as e:
                 logger.warning(f"Model SVG generation error: {e}; falling back")
 
-        # 2) Plotly fallback
         svg = self._plotly.render(chart_spec, data)
         return apply_theme(svg)
 
@@ -91,7 +76,6 @@ class SVGRenderer(BaseModel):
         self, chart_spec: Dict[str, Any], data: List[Dict[str, Any]]
     ) -> str:
         import json
-        import torch
 
         sample = data[:50]
         user_content = (
