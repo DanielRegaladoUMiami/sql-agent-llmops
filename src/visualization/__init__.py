@@ -1,11 +1,6 @@
-"""
-Visualization module for generating charts and SVG outputs.
+"""Visualization helpers: themed Plotly fallback + SVG post-processor."""
 
-Provides SVG rendering, validation, and Plotly fallback capabilities
-for converting data into visual formats.
-"""
+from src.visualization.plotly_fallback import PlotlyRenderer
+from src.visualization.svg_theme import apply_theme, is_renderable_svg
 
-from src.visualization.svg_validator import SVGValidator
-from src.visualization.plotly_fallback import PlotlyFallback
-
-__all__ = ["SVGValidator", "PlotlyFallback"]
+__all__ = ["PlotlyRenderer", "apply_theme", "is_renderable_svg"]

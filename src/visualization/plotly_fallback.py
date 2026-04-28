@@ -1,284 +1,155 @@
 """
-Plotly-based fallback visualization generation.
+Plotly fallback renderer with the project's Apple/Claude theme baked in.
 
-Creates Plotly figures programmatically from chart configs
-and data, with SVG export capabilities.
+Returns inline SVG strings so the app can drop them into gr.HTML directly.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List
+
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.io as pio
 
 logger = logging.getLogger(__name__)
 
 
-class PlotlyFallback:
-    """Generate visualizations using Plotly as fallback."""
+# Theme constants (mirror of svg_theme.py)
+ACCENT = "#C96442"
+INK = "#0E0E0E"
+INK_MUTED = "#5A5A5A"
+INK_FAINT = "#E5E5E5"
 
-    def __init__(self) -> None:
-        """Initialize Plotly fallback renderer."""
-        self.has_plotly = self._check_plotly()
+FONT_FAMILY = (
+    '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", '
+    '"Helvetica Neue", Arial, sans-serif'
+)
 
-    def _check_plotly(self) -> bool:
-        """Check if Plotly is available."""
-        try:
-            import plotly
-            import plotly.graph_objects as go
-            import plotly.express as px
-            return True
-        except ImportError:
-            logger.warning("Plotly not available for visualization")
-            return False
 
-    def create_figure(
-        self,
-        chart_config: Dict[str, Any],
-        data: List[Dict[str, Any]],
-    ) -> Optional[Any]:
-        """
-        Create Plotly figure from configuration.
+def _theme_layout(title: str = "") -> dict:
+    return dict(
+        title=dict(text=title, font=dict(family=FONT_FAMILY, size=15, color=INK)),
+        font=dict(family=FONT_FAMILY, size=12, color=INK),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=48, r=24, t=44, b=44),
+        xaxis=dict(
+            showgrid=True, gridcolor=INK_FAINT, zerolinecolor=INK_FAINT,
+            linecolor=INK_FAINT, tickcolor=INK_FAINT,
+            tickfont=dict(color=INK_MUTED, family=FONT_FAMILY, size=11),
+            title_font=dict(color=INK, family=FONT_FAMILY, size=12),
+        ),
+        yaxis=dict(
+            showgrid=True, gridcolor=INK_FAINT, zerolinecolor=INK_FAINT,
+            linecolor=INK_FAINT, tickcolor=INK_FAINT,
+            tickfont=dict(color=INK_MUTED, family=FONT_FAMILY, size=11),
+            title_font=dict(color=INK, family=FONT_FAMILY, size=12),
+        ),
+        showlegend=False,
+        colorway=[ACCENT, INK, INK_MUTED, "#8B7355", "#A0826D"],
+    )
 
-        Args:
-            chart_config: Chart configuration
-            data: Data rows
 
-        Returns:
-            Plotly Figure object or None
-        """
-        if not self.has_plotly:
-            return None
+class PlotlyRenderer:
+    """Render a chart spec + data tuple as a themed inline SVG."""
 
-        try:
-            chart_type = chart_config.get("chart_type", "table")
-            title = chart_config.get("title", "Data Visualization")
-            x_col = chart_config.get("x_column")
-            y_col = chart_config.get("y_column")
-            color_col = chart_config.get("color_column")
-
-            if chart_type == "table":
-                return self._create_table(data, title)
-            elif chart_type == "line":
-                return self._create_line(data, x_col, y_col, color_col, title)
-            elif chart_type == "bar":
-                return self._create_bar(data, x_col, y_col, color_col, title)
-            elif chart_type == "scatter":
-                return self._create_scatter(data, x_col, y_col, color_col, title)
-            elif chart_type == "pie":
-                return self._create_pie(data, x_col, y_col, title)
-            elif chart_type == "histogram":
-                return self._create_histogram(data, x_col, title)
-            elif chart_type == "box":
-                return self._create_box(data, x_col, y_col, title)
-            else:
-                return self._create_table(data, title)
-
-        except Exception as e:
-            logger.error(f"Error creating figure: {e}")
-            return None
-
-    def _create_table(self, data: List[Dict[str, Any]], title: str) -> Any:
-        """Create table figure."""
-        import plotly.graph_objects as go
-
+    def render(self, spec: Dict[str, Any], data: List[Dict[str, Any]]) -> str:
         if not data:
-            fig = go.Figure()
-            fig.add_annotation(text="No data to display")
-            return fig
+            return self._empty("No data returned by the query.")
 
-        columns = list(data[0].keys())
-        rows = [[str(row.get(col, "")) for col in columns] for row in data]
+        df = pd.DataFrame(data)
+        chart_type = (spec.get("chart_type") or "bar").lower()
+        title = spec.get("title") or ""
+        x = spec.get("x_column") or (df.columns[0] if len(df.columns) >= 1 else None)
+        y = spec.get("y_column") or (df.columns[1] if len(df.columns) >= 2 else None)
 
-        fig = go.Figure(data=[go.Table(
-            header=dict(values=columns, fill_color="lightblue"),
-            cells=dict(
-                values=list(zip(*rows)) if rows else [],
-                fill_color="white",
+        try:
+            fig = self._build(chart_type, df, x, y, title, spec)
+        except Exception as e:
+            logger.warning(f"Plotly build failed ({e}); rendering as table")
+            fig = self._table_fig(df, title)
+
+        fig.update_layout(**_theme_layout(title))
+        return self._to_svg(fig)
+
+    def _build(
+        self,
+        kind: str,
+        df: pd.DataFrame,
+        x: str | None,
+        y: str | None,
+        title: str,
+        spec: Dict[str, Any],
+    ) -> go.Figure:
+        if kind == "table" or x is None or y is None:
+            return self._table_fig(df, title)
+
+        if kind == "bar":
+            return go.Figure(go.Bar(
+                x=df[x], y=df[y], marker_color=ACCENT, marker_line_width=0,
+            ))
+        if kind == "line":
+            return go.Figure(go.Scatter(
+                x=df[x], y=df[y], mode="lines+markers",
+                line=dict(color=ACCENT, width=2),
+                marker=dict(color=ACCENT, size=6),
+            ))
+        if kind == "area":
+            return go.Figure(go.Scatter(
+                x=df[x], y=df[y], mode="lines",
+                fill="tozeroy",
+                line=dict(color=ACCENT, width=2),
+                fillcolor="rgba(201,100,66,0.18)",
+            ))
+        if kind == "scatter":
+            return go.Figure(go.Scatter(
+                x=df[x], y=df[y], mode="markers",
+                marker=dict(color=ACCENT, size=8, opacity=0.75),
+            ))
+        if kind == "pie":
+            return go.Figure(go.Pie(
+                labels=df[x], values=df[y], hole=0.55,
+                marker=dict(line=dict(color="#FAFAF9", width=2)),
+                textfont=dict(family=FONT_FAMILY, color=INK),
+            ))
+        if kind == "histogram":
+            return go.Figure(go.Histogram(x=df[x], marker_color=ACCENT))
+
+        return go.Figure(go.Bar(x=df[x], y=df[y], marker_color=ACCENT))
+
+    def _table_fig(self, df: pd.DataFrame, title: str) -> go.Figure:
+        df = df.head(100)
+        return go.Figure(go.Table(
+            header=dict(
+                values=[f"<b>{c}</b>" for c in df.columns],
+                fill_color="rgba(0,0,0,0)",
+                line_color=INK_FAINT,
+                align="left",
+                font=dict(family=FONT_FAMILY, color=INK, size=12),
+                height=32,
             ),
-        )])
+            cells=dict(
+                values=[df[c].astype(str).tolist() for c in df.columns],
+                fill_color="rgba(0,0,0,0)",
+                line_color=INK_FAINT,
+                align="left",
+                font=dict(family=FONT_FAMILY, color=INK_MUTED, size=11),
+                height=28,
+            ),
+        ))
 
-        fig.update_layout(title_text=title, height=500)
-        return fig
-
-    def _create_line(
-        self,
-        data: List[Dict[str, Any]],
-        x_col: Optional[str],
-        y_col: Optional[str],
-        color_col: Optional[str],
-        title: str,
-    ) -> Any:
-        """Create line chart."""
-        import plotly.express as px
-
-        if not x_col or not y_col:
-            return self._create_table(data, title)
-
+    def _to_svg(self, fig: go.Figure) -> str:
         try:
-            return px.line(
-                data,
-                x=x_col,
-                y=y_col,
-                color=color_col,
-                title=title,
-                markers=True,
-            )
+            return pio.to_image(fig, format="svg").decode("utf-8")
         except Exception as e:
-            logger.warning(f"Line chart creation failed: {e}")
-            return self._create_table(data, title)
+            logger.warning(f"to_image SVG failed ({e}); returning HTML")
+            return fig.to_html(include_plotlyjs="cdn", full_html=False)
 
-    def _create_bar(
-        self,
-        data: List[Dict[str, Any]],
-        x_col: Optional[str],
-        y_col: Optional[str],
-        color_col: Optional[str],
-        title: str,
-    ) -> Any:
-        """Create bar chart."""
-        import plotly.express as px
-
-        if not x_col or not y_col:
-            return self._create_table(data, title)
-
-        try:
-            return px.bar(
-                data,
-                x=x_col,
-                y=y_col,
-                color=color_col,
-                title=title,
-                barmode="group",
-            )
-        except Exception as e:
-            logger.warning(f"Bar chart creation failed: {e}")
-            return self._create_table(data, title)
-
-    def _create_scatter(
-        self,
-        data: List[Dict[str, Any]],
-        x_col: Optional[str],
-        y_col: Optional[str],
-        color_col: Optional[str],
-        title: str,
-    ) -> Any:
-        """Create scatter plot."""
-        import plotly.express as px
-
-        if not x_col or not y_col:
-            return self._create_table(data, title)
-
-        try:
-            return px.scatter(
-                data,
-                x=x_col,
-                y=y_col,
-                color=color_col,
-                title=title,
-                size_max=10,
-            )
-        except Exception as e:
-            logger.warning(f"Scatter plot creation failed: {e}")
-            return self._create_table(data, title)
-
-    def _create_pie(
-        self,
-        data: List[Dict[str, Any]],
-        x_col: Optional[str],
-        y_col: Optional[str],
-        title: str,
-    ) -> Any:
-        """Create pie chart."""
-        import plotly.express as px
-
-        if not x_col or not y_col:
-            return self._create_table(data, title)
-
-        try:
-            return px.pie(
-                data,
-                names=x_col,
-                values=y_col,
-                title=title,
-            )
-        except Exception as e:
-            logger.warning(f"Pie chart creation failed: {e}")
-            return self._create_table(data, title)
-
-    def _create_histogram(
-        self,
-        data: List[Dict[str, Any]],
-        x_col: Optional[str],
-        title: str,
-    ) -> Any:
-        """Create histogram."""
-        import plotly.express as px
-
-        if not x_col:
-            return self._create_table(data, title)
-
-        try:
-            return px.histogram(
-                data,
-                x=x_col,
-                title=title,
-                nbins=30,
-            )
-        except Exception as e:
-            logger.warning(f"Histogram creation failed: {e}")
-            return self._create_table(data, title)
-
-    def _create_box(
-        self,
-        data: List[Dict[str, Any]],
-        x_col: Optional[str],
-        y_col: Optional[str],
-        title: str,
-    ) -> Any:
-        """Create box plot."""
-        import plotly.express as px
-
-        if not y_col:
-            return self._create_table(data, title)
-
-        try:
-            return px.box(
-                data,
-                x=x_col,
-                y=y_col,
-                title=title,
-            )
-        except Exception as e:
-            logger.warning(f"Box plot creation failed: {e}")
-            return self._create_table(data, title)
-
-    def to_svg(self, fig: Any) -> str:
-        """
-        Convert Plotly figure to SVG.
-
-        Args:
-            fig: Plotly Figure object
-
-        Returns:
-            SVG string
-        """
-        try:
-            return fig.to_image(format="svg").decode("utf-8")
-        except Exception:
-            # Fallback to HTML
-            logger.warning("SVG export not available, using HTML")
-            return fig.to_html()
-
-    def to_html(self, fig: Any) -> str:
-        """
-        Convert Plotly figure to HTML.
-
-        Args:
-            fig: Plotly Figure object
-
-        Returns:
-            HTML string
-        """
-        try:
-            return fig.to_html(include_plotlyjs=False)
-        except Exception as e:
-            logger.error(f"Error converting to HTML: {e}")
-            return "<p>Error rendering visualization</p>"
+    def _empty(self, msg: str) -> str:
+        return f'''<svg viewBox="0 0 600 200" preserveAspectRatio="xMidYMid meet"
+                       style="width:100%;height:auto;display:block">
+            <text x="300" y="100" text-anchor="middle"
+                  font-family="{FONT_FAMILY}" font-size="14" fill="{INK_MUTED}">
+                {msg}
+            </text>
+        </svg>'''

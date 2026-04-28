@@ -1,208 +1,143 @@
 """
-Chart Reasoner model that determines optimal visualizations for data.
+Chart Reasoner: query results -> chart spec via the trained Phi-3 Mini LoRA.
 
-Analyzes query results and recommends chart type, configuration,
-and display parameters. Returns structured chart config JSON.
+Uses the adapter-only repo so the LoRA loads on top of the original
+Phi-3-mini-4k-instruct base, keeping Hub downloads small.
 """
 
 import json
 import logging
-from typing import Optional, Any, Dict, List
+import re
+from typing import Any, Dict, List
 
 from src.models.base import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
+SYSTEM_PROMPT = (
+    "You are a data visualization expert. Given a question, the SQL that "
+    "answers it, and a sample of the result rows, produce a JSON chart "
+    "specification. Choose the chart type that tells the clearest story. "
+    "Return only valid JSON, no commentary."
+)
+
+
 class ChartReasoner(BaseModel):
-    """Reason about optimal chart visualizations for SQL query results."""
+    """Generate chart specs from SQL result sets."""
+
+    DEFAULT_MERGED = "DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora"
 
     def __init__(
         self,
-        model_name: str = "chart-reasoner",
-        model_path: Optional[str] = None,
-        hf_model: str = "mistralai/Mistral-7B-Instruct-v0.1",
-        temperature: float = 0.2,
-        max_tokens: int = 300,
+        hf_model: str = DEFAULT_MERGED,
+        temperature: float = 0.0,
+        max_new_tokens: int = 300,
     ) -> None:
-        """
-        Initialize Chart Reasoner model.
-
-        Args:
-            model_name: Model identifier
-            model_path: Path to model
-            hf_model: Hugging Face model identifier
-            temperature: Generation temperature
-            max_tokens: Maximum tokens to generate
-        """
-        super().__init__(model_name, model_path)
+        super().__init__(model_name="chart-reasoner")
         self.hf_model = hf_model
         self.temperature = temperature
-        self.max_tokens = max_tokens
+        self.max_new_tokens = max_new_tokens
 
     def load(self) -> None:
-        """Load Chart Reasoner model from Hugging Face."""
-        try:
-            from transformers import AutoTokenizer, AutoModelForCausalLM
-            import torch
-
-            logger.info(f"Loading Chart Reasoner model: {self.hf_model}")
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            logger.info(f"Using device: {device}")
-
-            self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model)
-            self.model = AutoModelForCausalLM.from_pretrained(
-                self.hf_model,
-                torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-                device_map=device,
-            )
-            self.is_loaded = True
-            logger.info("Chart Reasoner model loaded successfully")
-
-        except ImportError:
-            logger.error("transformers not installed")
-            raise
-        except Exception as e:
-            logger.error(f"Failed to load model: {e}")
-            raise
-
-    def generate(
-        self,
-        question: str,
-        sql: str,
-        results: List[Dict[str, Any]],
-        columns: List[Dict[str, str]],
-    ) -> Dict[str, Any]:
-        """
-        Generate chart configuration from query results.
-
-        Args:
-            question: Original question
-            sql: SQL query executed
-            results: Query result rows
-            columns: Column metadata
-
-        Returns:
-            Chart config dictionary with keys:
-            - chart_type: str (line, bar, scatter, pie, etc.)
-            - title: str
-            - x_column: str or None
-            - y_column: str or None
-            - color_column: str or None
-            - config: dict with chart-specific options
-        """
-        self._validate_loaded()
-
-        try:
-            prompt = self._build_prompt(question, sql, results, columns)
-            response = self._generate(prompt)
-            config = self._parse_config(response)
-
-            logger.info(f"Generated chart config: {config['chart_type']}")
-            return config
-
-        except Exception as e:
-            logger.error(f"Error generating chart config: {e}")
-            return self._default_config()
-
-    def _generate(self, prompt: str) -> str:
-        """Generate using model."""
+        from transformers import AutoModelForCausalLM, AutoTokenizer
         import torch
 
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        logger.info(f"Loading chart reasoner: {self.hf_model}")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        dtype = torch.bfloat16 if device == "cuda" else torch.float32
 
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_new_tokens=self.max_tokens,
-                temperature=self.temperature,
-                top_p=0.95,
-                do_sample=True,
-            )
+        self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.hf_model,
+            torch_dtype=dtype,
+            device_map=device,
+        )
+        self.model.eval()
+        self.is_loaded = True
+        logger.info(f"Chart reasoner loaded on {device}")
 
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        return response
-
-    def _build_prompt(
+    def generate(  # type: ignore[override]
         self,
         question: str,
         sql: str,
         results: List[Dict[str, Any]],
-        columns: List[Dict[str, str]],
-    ) -> str:
-        """Build prompt for chart reasoning."""
-        sample_rows = results[:3] if results else []
-        column_names = [col["name"] for col in columns]
+        columns: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        self._validate_loaded()
+        import torch
 
-        prompt = f"""You are an expert data visualization specialist. Analyze the SQL query results and recommend the best chart type.
+        sample = results[:5]
+        col_names = [c["name"] for c in columns]
+        user_content = (
+            f"Question: {question}\n"
+            f"SQL: {sql}\n"
+            f"Columns: {col_names}\n"
+            f"Sample rows: {json.dumps(sample, default=str)}\n\n"
+            "Return JSON with: chart_type (one of: bar, line, scatter, "
+            "pie, area, table), title, x_column, y_column, "
+            "color_column (optional), rationale."
+        )
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_content},
+        ]
+        input_ids = self.tokenizer.apply_chat_template(
+            messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
+        ).to(self.model.device)
 
-Question: {question}
-SQL Query: {sql}
+        with torch.no_grad():
+            out = self.model.generate(
+                input_ids,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=self.temperature > 0,
+                temperature=self.temperature if self.temperature > 0 else 1.0,
+                pad_token_id=self.tokenizer.eos_token_id,
+            )
+        raw = self.tokenizer.decode(
+            out[0][input_ids.shape[1]:], skip_special_tokens=True
+        )
+        return self._parse_spec(raw, columns)
 
-Columns: {column_names}
-Sample Data:
-{json.dumps(sample_rows, indent=2)}
-
-Based on the data, recommend a visualization. Respond with ONLY a JSON object (no markdown) with these keys:
-- chart_type: one of [line, bar, scatter, pie, histogram, box, heatmap, table]
-- title: descriptive title
-- x_column: column for X axis (null for pie/table)
-- y_column: column for Y axis (null for pie/table)
-- color_column: optional column for color encoding
-- show_legend: boolean
-- show_grid: boolean
-
-JSON Response:"""
-        return prompt
-
-    def _parse_config(self, response: str) -> Dict[str, Any]:
-        """Parse JSON config from response."""
+    def _parse_spec(
+        self, text: str, columns: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        # Try to extract a JSON object from the response
+        match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", text, re.DOTALL)
+        if not match:
+            logger.warning("No JSON found in chart reasoner output")
+            return self._fallback_spec(columns)
         try:
-            lines = response.strip().split("\n")
-            json_str = ""
-            in_json = False
-
-            for line in lines:
-                if "{" in line:
-                    in_json = True
-                if in_json:
-                    json_str += line
-
-            config = json.loads(json_str)
-
-            # Validate required fields
-            if "chart_type" not in config:
-                config["chart_type"] = "table"
-
-            config = {
-                "chart_type": config.get("chart_type", "table"),
-                "title": config.get("title", "Data Visualization"),
-                "x_column": config.get("x_column"),
-                "y_column": config.get("y_column"),
-                "color_column": config.get("color_column"),
-                "config": {
-                    "show_legend": config.get("show_legend", True),
-                    "show_grid": config.get("show_grid", True),
-                },
-            }
-
-            return config
-
+            spec = json.loads(match.group(0))
         except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse chart config JSON: {e}")
-            return self._default_config()
+            logger.warning(f"Chart spec JSON invalid: {e}")
+            return self._fallback_spec(columns)
 
-    def _default_config(self) -> Dict[str, Any]:
-        """Return default chart configuration."""
+        # Normalize
         return {
-            "chart_type": "table",
-            "title": "Query Results",
-            "x_column": None,
-            "y_column": None,
+            "chart_type": spec.get("chart_type", "bar").lower(),
+            "title": spec.get("title", "Result"),
+            "x_column": spec.get("x_column"),
+            "y_column": spec.get("y_column"),
+            "color_column": spec.get("color_column"),
+            "rationale": spec.get("rationale", ""),
+        }
+
+    def _fallback_spec(self, columns: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Heuristic fallback when the model output can't be parsed."""
+        if not columns:
+            return {"chart_type": "table", "title": "Result"}
+        if len(columns) == 1:
+            return {
+                "chart_type": "table",
+                "title": "Result",
+                "x_column": columns[0]["name"],
+                "y_column": None,
+            }
+        return {
+            "chart_type": "bar",
+            "title": "Result",
+            "x_column": columns[0]["name"],
+            "y_column": columns[1]["name"],
             "color_column": None,
-            "config": {
-                "show_legend": True,
-                "show_grid": True,
-            },
         }
