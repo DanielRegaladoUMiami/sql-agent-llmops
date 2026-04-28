@@ -790,6 +790,11 @@ def build_app() -> gr.Blocks:
             '</div>'
             '</div>'
         )
+        # ZeroGPU requires authenticated identity for proper quota.
+        # Iframes don't always pass HF cookies, so we surface an explicit
+        # OAuth button. After login the user gets 25min/day Pro quota.
+        with gr.Row():
+            gr.LoginButton(value="Sign in with Hugging Face", size="sm")
 
         # Upload
         with gr.Row(elem_classes=["upload-row"]):
