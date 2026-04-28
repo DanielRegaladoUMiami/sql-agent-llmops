@@ -11,6 +11,8 @@ short_description: Ask anything about your data. NL → SQL → chart.
 hardware: zero-a10g
 suggested_hardware: zero-a10g
 hf_oauth: true
+hf_oauth_scopes:
+  - inference-api
 hf_oauth_expiration_minutes: 480
 models:
   - DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora
