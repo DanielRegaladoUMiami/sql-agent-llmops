@@ -674,31 +674,27 @@ def _empty_state_html() -> str:
 
 
 def _ready_state_html() -> str:
-    """Shown when data is loaded but no queries asked yet. Shows schema preview."""
-    agent = get_agent()
-    tables = agent.list_tables()
-    if not tables:
-        return _empty_state_html()
-
-    table = tables[0]
-    schema = agent.executor.get_table_schema(table)
-    schema_html = _schema_preview_html(table, schema)
-
+    """Shown when data is loaded but no queries asked yet."""
     return (
         '<div class="empty">'
         '<div class="empty-title">Ready</div>'
         '<div class="empty-sub">Ask a question above, or try one of these:</div>'
         f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
         '</div>'
-        f'{schema_html}'
     )
 
 
 # ============================================================ EVENT HANDLERS
-def on_upload(file) -> Tuple[str, str, list]:
-    """Register an uploaded file and clear history. Conversation re-renders to ready state."""
+def _build_schema_html(table: str) -> str:
+    agent = get_agent()
+    schema = agent.executor.get_table_schema(table)
+    return _schema_preview_html(table, schema)
+
+
+def on_upload(file):
+    """Returns: (chip, schema_html, conversation, history_state)."""
     if file is None:
-        return "", _conversation_html([]), []
+        return "", "", _conversation_html([]), []
     agent = get_agent()
     agent.reset()
     try:
@@ -707,14 +703,15 @@ def on_upload(file) -> Tuple[str, str, list]:
         rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
         cols = len(agent.executor.get_table_schema(table))
         chip = _file_chip_html(path.name, rows, cols)
-        return chip, _conversation_html([]), []
+        schema = _build_schema_html(table)
+        return chip, schema, _conversation_html([]), []
     except Exception as e:
         logger.exception("upload failed")
-        return "", f'<div class="turn-error">Could not load file: {e}</div>', []
+        return "", "", f'<div class="turn-error">Could not load file: {e}</div>', []
 
 
-def on_load_demo() -> Tuple[str, str, list]:
-    """Load the embedded Titanic example and re-render to ready state."""
+def on_load_demo():
+    """Returns: (chip, schema_html, conversation, history_state)."""
     agent = get_agent()
     agent.reset()
     try:
@@ -723,10 +720,11 @@ def on_load_demo() -> Tuple[str, str, list]:
         rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
         cols = len(agent.executor.get_table_schema(table))
         chip = _file_chip_html("titanic.csv (demo)", rows, cols)
-        return chip, _conversation_html([]), []
+        schema = _build_schema_html(table)
+        return chip, schema, _conversation_html([]), []
     except Exception as e:
         logger.exception("demo load failed")
-        return "", f'<div class="turn-error">Could not load demo: {e}</div>', []
+        return "", "", f'<div class="turn-error">Could not load demo: {e}</div>', []
 
 
 @spaces.GPU(duration=60)
@@ -747,22 +745,22 @@ def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], Non
     Generator: yields conversation HTML at each pipeline step so the user
     sees real-time progress instead of waiting silently.
     """
-    history = history or []
+    # Single-shot mode: each Ask is a fresh query, replaces any previous result
     question = (question or "").strip()
     if not question:
-        yield _conversation_html(history), "", history
+        yield _conversation_html([]), "", []
         return
 
     if not get_agent().list_tables():
-        history.append({
+        result = {
             "question": question,
             "error": "Upload a file first or load the demo dataset.",
-        })
-        yield _conversation_html(history), "", history
+        }
+        yield _conversation_html([result]), "", [result]
         return
 
-    # First yield: show the question with progress indicator
-    yield _conversation_html(history, in_progress=(question, "Generating SQL…")), "", history
+    # First yield: show the question with progress indicator (no past history)
+    yield _conversation_html([], in_progress=(question, "Generating SQL…")), "", []
 
     try:
         result = _gpu_process(question)
@@ -770,14 +768,16 @@ def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], Non
         logger.exception("ask failed")
         result = {"question": question, "error": str(e)}
 
-    history.append(result)
-    yield _conversation_html(history), "", history
+    # Replace history with just this single result
+    yield _conversation_html([result]), "", [result]
 
 
 def on_reset():
-    """Clear everything: uploaded file, chip, question, conversation, agent state."""
+    """Clear ONLY the dataset (file, chip, schema, agent state).
+    Also wipes the displayed result since it's now stale without data.
+    Order: upload, chip_html, schema_html, conversation, history_state
+    """
     get_agent().reset()
-    # Order: upload, chip_html, question, conversation, history_state
     return None, "", "", _conversation_html([]), []
 
 
@@ -814,6 +814,10 @@ def build_app() -> gr.Blocks:
             )
         chip_html = gr.HTML("")
 
+        # Schema preview — sits between dataset and the question, so users
+        # know the available column names before writing a query.
+        schema_html = gr.HTML("")
+
         # Question
         with gr.Group(elem_classes=["question-row"]):
             question = gr.Textbox(
@@ -832,7 +836,7 @@ def build_app() -> gr.Blocks:
             demo_btn = gr.Button("Load demo dataset", variant="secondary", size="sm",
                                   elem_id="load_demo_btn")
 
-        # Conversation
+        # Result of latest query (single-shot, replaces previous on each Ask)
         history_state = gr.State([])
         conversation = gr.HTML(_conversation_html([]))
 
@@ -840,17 +844,17 @@ def build_app() -> gr.Blocks:
         upload.upload(
             fn=on_upload,
             inputs=upload,
-            outputs=[chip_html, conversation, history_state],
+            outputs=[chip_html, schema_html, conversation, history_state],
             api_name=False,
         )
         upload.clear(
-            fn=lambda: ("", _conversation_html([]), []),
-            outputs=[chip_html, conversation, history_state],
+            fn=lambda: ("", "", _conversation_html([]), []),
+            outputs=[chip_html, schema_html, conversation, history_state],
             api_name=False,
         )
         demo_btn.click(
             fn=on_load_demo,
-            outputs=[chip_html, conversation, history_state],
+            outputs=[chip_html, schema_html, conversation, history_state],
             api_name=False,
         )
         ask_btn.click(
@@ -867,7 +871,7 @@ def build_app() -> gr.Blocks:
         )
         reset_btn.click(
             fn=on_reset,
-            outputs=[upload, chip_html, question, conversation, history_state],
+            outputs=[upload, chip_html, schema_html, conversation, history_state],
             api_name=False,
         )
 
