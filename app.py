@@ -1,21 +1,19 @@
 """
 SQL Agent — Gradio app for Hugging Face Spaces (ZeroGPU).
 
-Apple x Claude minimalist design: single column, generous whitespace, warm
-accent, monochrome ink, SF font stack, no chrome.
-
-Entry point file at the repo root because that's the HF Spaces convention.
+Apple x Claude minimalist design with progressive feedback during the
+multi-step pipeline.
 """
 
+import io
 import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Generator, Optional, Tuple
 
 import pandas as pd
 
-# Ensure src/ is importable when run from repo root
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 
@@ -23,9 +21,6 @@ import gradio as gr  # noqa: E402
 
 from src.orchestrator.pipeline import SQLAgentOrchestrator  # noqa: E402
 
-# spaces is a Hugging Face SDK that exposes @spaces.GPU. It only exists on
-# HF Spaces with ZeroGPU enabled, so we degrade gracefully when running
-# locally.
 try:
     import spaces  # type: ignore
     HAS_SPACES = True
@@ -45,7 +40,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------- styling
+# ============================================================ THEME / CSS
 THEME_CSS = """
 :root {
   --ink: #0E0E0E;
@@ -58,7 +53,7 @@ THEME_CSS = """
   --radius: 16px;
   --radius-sm: 10px;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-md: 0 6px 24px rgba(0,0,0,0.08);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
           "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -74,72 +69,75 @@ THEME_CSS = """
     --accent: #E8866A;
     --accent-soft: rgba(232, 134, 106, 0.10);
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+    --shadow-md: 0 6px 24px rgba(0,0,0,0.45);
   }
 }
 
-/* Reset Gradio chrome */
+/* Gradio container reset (Gradio 5 selectors) */
+gradio-app, .gradio-container, .main, .app, .contain, .wrap {
+  background: var(--surface) !important;
+  color: var(--ink) !important;
+  font-family: var(--font) !important;
+}
 .gradio-container {
   max-width: 760px !important;
   margin: 0 auto !important;
-  padding: 32px 24px 80px !important;
-  background: var(--surface) !important;
-  font-family: var(--font) !important;
-  color: var(--ink) !important;
+  padding: 36px 24px 100px !important;
 }
-body, .gradio-container, .main, footer { background: var(--surface) !important; }
 footer { display: none !important; }
+.show-api { display: none !important; }
 
 /* Header */
 .app-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--ink-faint);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
 }
-.app-title {
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-.app-subtitle {
-  font-size: 13px;
-  color: var(--ink-muted);
-  margin-top: 2px;
-}
+.app-title { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
+.app-subtitle { font-size: 13px; color: var(--ink-muted); }
 
-/* Cards */
-.card {
-  background: var(--surface-raised);
-  border: 1px solid var(--ink-faint);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 200ms ease, border-color 200ms ease;
-}
-.card:hover { box-shadow: var(--shadow-md); }
-
-/* Upload area */
-.upload-zone {
+/* File upload — compact, Apple-style */
+.upload-row { margin-bottom: 18px; }
+.upload-row .gr-file, .upload-row .file-preview { background: transparent !important; }
+.upload-row [data-testid="file"] {
   border: 1.5px dashed var(--ink-faint) !important;
   border-radius: var(--radius) !important;
+  padding: 24px 16px !important;
   background: transparent !important;
-  padding: 32px 20px !important;
-  text-align: center !important;
-  transition: border-color 200ms ease, background 200ms ease !important;
+  transition: all 200ms ease !important;
 }
-.upload-zone:hover {
+.upload-row [data-testid="file"]:hover {
   border-color: var(--accent) !important;
   background: var(--accent-soft) !important;
 }
-.upload-zone .icon-wrap, .upload-zone svg { color: var(--ink-muted) !important; }
+.upload-row [data-testid="file"] * { color: var(--ink-muted) !important; }
 
-/* Inputs */
-input, textarea, .gr-input, .gr-text-input textarea {
+/* File chip (after upload) */
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ink);
+}
+.file-chip-meta { color: var(--ink-muted); font-size: 12px; }
+.file-chip-dot {
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+/* Question input */
+.question-row { margin: 14px 0 8px; }
+textarea, .gr-text-input textarea, [data-testid="textbox"] textarea {
   background: var(--surface-raised) !important;
   border: 1px solid var(--ink-faint) !important;
   border-radius: var(--radius-sm) !important;
@@ -149,12 +147,18 @@ input, textarea, .gr-input, .gr-text-input textarea {
   padding: 14px 16px !important;
   box-shadow: none !important;
   transition: border-color 150ms ease !important;
+  line-height: 1.5 !important;
 }
-input:focus, textarea:focus { border-color: var(--accent) !important; outline: none !important; }
-::placeholder { color: var(--ink-muted) !important; }
+textarea:focus, [data-testid="textbox"] textarea:focus {
+  border-color: var(--accent) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px var(--accent-soft) !important;
+}
+textarea::placeholder { color: var(--ink-muted) !important; }
+.kb-hint { font-size: 11px; color: var(--ink-muted); margin: 4px 4px 0; }
 
 /* Buttons */
-button.primary, .gr-button-primary {
+button.primary, button[variant="primary"], .gr-button.primary {
   background: var(--ink) !important;
   color: var(--surface) !important;
   border: none !important;
@@ -166,8 +170,8 @@ button.primary, .gr-button-primary {
   transition: opacity 150ms ease !important;
   box-shadow: none !important;
 }
-button.primary:hover, .gr-button-primary:hover { opacity: 0.85 !important; }
-button.secondary, .gr-button-secondary {
+button.primary:hover { opacity: 0.85 !important; }
+button.secondary, button[variant="secondary"] {
   background: transparent !important;
   color: var(--ink) !important;
   border: 1px solid var(--ink-faint) !important;
@@ -177,35 +181,56 @@ button.secondary, .gr-button-secondary {
 }
 
 /* Conversation */
-.turn { margin: 28px 0; }
+.turn { margin: 32px 0; }
+.turn:first-child { margin-top: 16px; }
 .turn-question {
   font-size: 16px;
   color: var(--ink);
   font-weight: 500;
   margin-bottom: 14px;
   letter-spacing: -0.01em;
+  line-height: 1.5;
 }
-.turn-status {
+.turn-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 13px;
   color: var(--ink-muted);
-  font-style: italic;
-  margin: 6px 0 12px;
+  padding: 12px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius-sm);
+  margin: 6px 0;
+}
+.turn-progress::before {
+  content: "";
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.3); }
 }
 .turn-error {
   background: var(--accent-soft);
-  border-left: 2px solid var(--accent);
+  border-left: 3px solid var(--accent);
   color: var(--accent);
-  padding: 10px 14px;
+  padding: 12px 14px;
   border-radius: var(--radius-sm);
   font-size: 13px;
   margin: 6px 0;
+  font-family: var(--font-mono);
 }
+
 .chart-wrap {
   background: var(--surface-raised);
   border: 1px solid var(--ink-faint);
   border-radius: var(--radius);
   padding: 24px;
-  margin: 8px 0 12px;
+  margin: 8px 0 14px;
   box-shadow: var(--shadow-sm);
 }
 .chart-wrap svg { width: 100% !important; height: auto !important; display: block; }
@@ -216,13 +241,13 @@ button.secondary, .gr-button-secondary {
   border: 1px solid var(--ink-faint);
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ink);
   padding: 14px 16px;
   overflow-x: auto;
-  white-space: pre;
-  margin: 6px 0;
-  line-height: 1.55;
+  white-space: pre-wrap;
+  margin: 6px 0 0;
+  line-height: 1.6;
 }
 
 /* Details / collapsibles */
@@ -235,7 +260,7 @@ details {
 details summary {
   cursor: pointer;
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--ink-muted);
   list-style: none;
   user-select: none;
@@ -245,7 +270,8 @@ details summary::-webkit-details-marker { display: none; }
 details summary::before {
   content: "›";
   display: inline-block;
-  margin-right: 8px;
+  width: 12px;
+  margin-right: 4px;
   transition: transform 150ms ease;
   color: var(--ink-muted);
 }
@@ -265,6 +291,7 @@ details > *:not(summary) { padding: 0 14px 14px; }
   color: var(--ink);
   padding: 8px 10px;
   border-bottom: 1px solid var(--ink-faint);
+  white-space: nowrap;
 }
 .data-table td {
   padding: 7px 10px;
@@ -272,36 +299,84 @@ details > *:not(summary) { padding: 0 14px 14px; }
   border-bottom: 1px solid var(--ink-faint);
 }
 .data-table tr:last-child td { border-bottom: none; }
-
-/* File chip */
-.file-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: var(--surface-raised);
-  border: 1px solid var(--ink-faint);
-  border-radius: 999px;
-  font-size: 13px;
-  color: var(--ink);
-}
-.file-chip-meta { color: var(--ink-muted); }
+.data-table-meta { font-size: 11px; color: var(--ink-muted); margin-top: 8px; padding: 0 4px; }
 
 /* Empty state */
 .empty {
+  padding: 40px 0 8px;
   text-align: center;
+}
+.empty-title {
+  font-size: 15px;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.empty-sub {
+  font-size: 13px;
   color: var(--ink-muted);
-  font-size: 14px;
-  padding: 60px 20px;
+  margin-bottom: 28px;
+}
+.example-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  max-width: 580px;
+  margin: 0 auto;
+}
+.example-card {
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.example-card:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.example-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.example-card-meta {
+  font-size: 11px;
+  color: var(--ink-muted);
 }
 
-/* Hide Gradio labels */
-.gr-form > label, .gr-block > label, label.svelte-1gfkn6j { display: none !important; }
+/* Suggestions */
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+}
+.suggestion-chip {
+  font-size: 12px;
+  padding: 6px 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--ink-muted);
+  transition: all 150ms ease;
+}
+.suggestion-chip:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+/* Hide labels Gradio adds */
+.gr-form > label, label.svelte-1gfkn6j, .label-wrap { display: none !important; }
 """
 
 
-# ---------------------------------------------------------- orchestrator
-# Single global orchestrator. Models load lazily inside @spaces.GPU.
+# ===================================================== ORCHESTRATOR (lazy)
 _AGENT: Optional[SQLAgentOrchestrator] = None
 
 
@@ -312,38 +387,89 @@ def get_agent() -> SQLAgentOrchestrator:
     return _AGENT
 
 
-# --------------------------------------------------------------- helpers
+# =================================================== EXAMPLE DATA (built-in)
+def _make_titanic_csv() -> Path:
+    """Tiny embedded Titanic-like sample so first-time users can play with no upload."""
+    p = ROOT / "_examples" / "titanic.csv"
+    if p.exists():
+        return p
+    p.parent.mkdir(parents=True, exist_ok=True)
+    df = pd.DataFrame({
+        "passenger_id": range(1, 21),
+        "survived": [0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1],
+        "pclass": [3, 1, 3, 1, 3, 3, 1, 3, 3, 2, 3, 1, 3, 3, 3, 2, 3, 2, 3, 3],
+        "sex": ["male","female","female","female","male","male","male","male","female","female",
+                "female","female","male","male","female","female","male","female","male","female"],
+        "age": [22,38,26,35,35,None,54,2,27,14,4,58,20,39,14,55,2,None,31,None],
+        "fare": [7.25,71.28,7.92,53.10,8.05,8.46,51.86,21.07,11.13,30.07,
+                 16.70,26.55,8.05,31.27,7.85,16.00,29.13,13.00,18.00,7.23],
+        "embarked": ["S","C","S","S","S","Q","S","S","S","C","S","S","S","S","Q","S","Q","S","S","Q"],
+    })
+    df.to_csv(p, index=False)
+    return p
+
+
+SUGGESTED_QUESTIONS = [
+    "What's the survival rate by passenger class?",
+    "Average fare by embarkation port",
+    "Top 5 oldest passengers who survived",
+    "Count of male vs female survivors",
+]
+
+
+# =================================================== HTML render helpers
 def _file_chip_html(filename: str, rows: int, cols: int) -> str:
     return (
-        f'<div class="file-chip">'
+        '<div class="file-chip">'
+        '<span class="file-chip-dot"></span>'
         f'<span>{filename}</span>'
-        f'<span class="file-chip-meta">· {rows:,} rows · {cols} cols</span>'
-        f'</div>'
+        f'<span class="file-chip-meta">{rows:,} rows · {cols} cols</span>'
+        '</div>'
     )
+
+
+def _suggestions_html(qs: list[str]) -> str:
+    if not qs:
+        return ""
+    chips = "".join(
+        f'<span class="suggestion-chip" onclick="document.querySelector(\'textarea\').value=this.textContent;document.querySelector(\'textarea\').focus();">{q}</span>'
+        for q in qs
+    )
+    return f'<div class="suggestions">{chips}</div>'
 
 
 def _data_table_html(rows: list[dict], max_rows: int = 10) -> str:
     if not rows:
-        return '<div class="empty">No rows.</div>'
+        return '<div class="empty-sub" style="padding:8px 0">No rows.</div>'
     df = pd.DataFrame(rows[:max_rows])
     cols = df.columns.tolist()
     head = "".join(f"<th>{c}</th>" for c in cols)
     body = "".join(
-        "<tr>" + "".join(f"<td>{r.get(c, '')}</td>" for c in cols) + "</tr>"
+        "<tr>" + "".join(
+            f"<td>{('' if r.get(c) is None else r.get(c, ''))}</td>" for c in cols
+        ) + "</tr>"
         for r in rows[:max_rows]
     )
     note = (
-        f'<div style="font-size:11px;color:var(--ink-muted);'
-        f'margin-top:8px">Showing {min(max_rows, len(rows))} of {len(rows):,} rows</div>'
+        f'<div class="data-table-meta">Showing {min(max_rows, len(rows))} of {len(rows):,} rows</div>'
         if len(rows) > max_rows else ""
     )
     return f'<table class="data-table"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>{note}'
 
 
-def _turn_html(result: dict) -> str:
-    """Render one full agent turn: chart, then collapsible SQL + data."""
-    parts: list[str] = []
-    parts.append(f'<div class="turn-question">{result["question"]}</div>')
+def _turn_html_progress(question: str, status: str) -> str:
+    """Render a turn that's still in progress (with animated indicator)."""
+    return (
+        '<div class="turn">'
+        f'<div class="turn-question">{question}</div>'
+        f'<div class="turn-progress">{status}</div>'
+        '</div>'
+    )
+
+
+def _turn_html_complete(result: dict) -> str:
+    """Render a finished turn."""
+    parts: list[str] = [f'<div class="turn-question">{result["question"]}</div>']
 
     if result.get("error"):
         parts.append(f'<div class="turn-error">{result["error"]}</div>')
@@ -353,7 +479,7 @@ def _turn_html(result: dict) -> str:
 
     if result.get("sql"):
         parts.append(
-            '<details><summary>SQL</summary>'
+            '<details><summary>SQL query</summary>'
             f'<pre class="sql-block">{result["sql"]}</pre>'
             '</details>'
         )
@@ -368,76 +494,125 @@ def _turn_html(result: dict) -> str:
     return f'<div class="turn">{"".join(parts)}</div>'
 
 
-def _conversation_html(history: list[dict]) -> str:
-    if not history:
-        return (
-            '<div class="empty">'
-            'Upload a CSV or JSON file and ask anything about your data.'
-            '</div>'
-        )
-    return "".join(_turn_html(t) for t in history)
+def _conversation_html(history: list[dict], in_progress: tuple[str, str] | None = None) -> str:
+    out = "".join(_turn_html_complete(t) for t in history)
+    if in_progress:
+        out += _turn_html_progress(in_progress[0], in_progress[1])
+    if not out:
+        return _empty_state_html()
+    return out
 
 
-# ------------------------------------------------------------ event flow
-def on_upload(file) -> Tuple[str, str]:
-    """File uploaded -> register in DuckDB, return chip HTML + status."""
+def _empty_state_html() -> str:
+    suggestions = _suggestions_html([
+        "Try the Titanic example below",
+        "Or upload your own CSV/JSON above",
+    ])
+    return (
+        '<div class="empty">'
+        '<div class="empty-title">No data yet</div>'
+        '<div class="empty-sub">Upload a CSV, JSON, Parquet or Excel file, or load the demo dataset.</div>'
+        '<div class="example-grid">'
+        '<div class="example-card" onclick="document.getElementById(\'load_demo_btn\').click()">'
+        '<div class="example-card-title">Titanic (demo)</div>'
+        '<div class="example-card-meta">20 passengers · 7 columns · click to load</div>'
+        '</div>'
+        '</div>'
+        '</div>'
+    )
+
+
+# ============================================================ EVENT HANDLERS
+def on_upload(file) -> Tuple[str, str, list]:
+    """Register an uploaded file and clear history."""
     if file is None:
-        return "", "No file."
+        return "", _conversation_html([]), []
     agent = get_agent()
     agent.reset()
     try:
         path = Path(file.name if hasattr(file, "name") else file)
         table = agent.load_data(path)
-        sample = agent.sample(table, 1)
-        rows = len(agent.executor.con.execute(f'SELECT * FROM "{table}"').fetchall())
-        cols = len(sample.columns)
-        return _file_chip_html(path.name, rows, cols), f"Ready: table “{table}”."
+        rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+        cols = len(agent.executor.get_table_schema(table))
+        chip = _file_chip_html(path.name, rows, cols)
+        # Show suggestions based on the table
+        intro = (
+            f'<div class="empty-title" style="margin-top:30px">Ready to query <code style="font-family:var(--font-mono);font-size:13px">{table}</code></div>'
+            f'<div class="empty-sub">Try a question or one of these:</div>'
+            f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
+        )
+        return chip, intro, []
     except Exception as e:
         logger.exception("upload failed")
-        return "", f"Could not load file: {e}"
+        return "", f'<div class="turn-error">Could not load file: {e}</div>', []
 
 
-@spaces.GPU(duration=120)
+def on_load_demo() -> Tuple[str, str, list]:
+    """Load the embedded Titanic example."""
+    agent = get_agent()
+    agent.reset()
+    p = _make_titanic_csv()
+    table = agent.load_data(p)
+    rows = agent.executor.con.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+    cols = len(agent.executor.get_table_schema(table))
+    chip = _file_chip_html("titanic.csv (demo)", rows, cols)
+    intro = (
+        f'<div class="empty-title" style="margin-top:30px">Loaded <code style="font-family:var(--font-mono);font-size:13px">{table}</code></div>'
+        f'<div class="empty-sub">Try one of these questions:</div>'
+        f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
+    )
+    return chip, intro, []
+
+
+@spaces.GPU(duration=180)
 def _gpu_process(question: str) -> dict:
-    """The actual GPU-bound call. Models are loaded lazily inside this scope."""
+    """The GPU-bound call. Models initialize lazily inside this scope."""
     agent = get_agent()
     return agent.process(question)
 
 
-def on_ask(question: str, history: list) -> Tuple[str, str, list]:
-    """Submit a question -> run pipeline -> append to history -> render."""
+def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], None, None]:
+    """
+    Generator: yields conversation HTML at each pipeline step so the user
+    sees real-time progress instead of waiting silently.
+    """
     history = history or []
     question = (question or "").strip()
     if not question:
-        return _conversation_html(history), "", history
+        yield _conversation_html(history), "", history
+        return
+
     if not get_agent().list_tables():
         history.append({
             "question": question,
-            "error": "Upload a CSV or JSON file first.",
+            "error": "Upload a file first or load the demo dataset.",
         })
-        return _conversation_html(history), "", history
+        yield _conversation_html(history), "", history
+        return
+
+    # First yield: show the question with progress indicator
+    yield _conversation_html(history, in_progress=(question, "Loading models (first query takes ~60s)…")), "", history
 
     try:
+        # Run the full pipeline
         result = _gpu_process(question)
     except Exception as e:
         logger.exception("ask failed")
         result = {"question": question, "error": str(e)}
 
     history.append(result)
-    return _conversation_html(history), "", history
+    yield _conversation_html(history), "", history
 
 
-def on_reset() -> Tuple[str, str, list]:
+def on_reset() -> Tuple[str, str, str, list]:
     get_agent().reset()
-    return "", "", []
+    return "", "", _conversation_html([]), []
 
 
-# ------------------------------------------------------------------ app
+# ====================================================================== APP
 def build_app() -> gr.Blocks:
     with gr.Blocks(
-        theme=gr.themes.Base(
-            font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
-        ),
+        theme=gr.themes.Base(),
         css=THEME_CSS,
         title="SQL Agent",
         analytics_enabled=False,
@@ -452,37 +627,53 @@ def build_app() -> gr.Blocks:
             '</div>'
         )
 
-        # Upload card
-        upload = gr.File(
-            label="",
-            file_types=[".csv", ".json", ".parquet", ".xlsx", ".xls"],
-            elem_classes=["upload-zone"],
-        )
+        # Upload
+        with gr.Row(elem_classes=["upload-row"]):
+            upload = gr.File(
+                label="",
+                file_types=[".csv", ".json", ".parquet", ".xlsx", ".xls"],
+                show_label=False,
+                container=False,
+            )
         chip_html = gr.HTML("")
-        upload_status = gr.Markdown("", visible=False)
 
-        # Question input
-        question = gr.Textbox(
-            placeholder="Ask anything about your data…",
-            lines=2,
-            max_lines=8,
-            show_label=False,
-            container=False,
-        )
+        # Question
+        with gr.Group(elem_classes=["question-row"]):
+            question = gr.Textbox(
+                placeholder="Ask anything about your data…",
+                lines=2,
+                max_lines=8,
+                show_label=False,
+                container=False,
+                autofocus=True,
+            )
+            gr.HTML('<div class="kb-hint">Press Enter to send · Shift+Enter for newline</div>')
+
         with gr.Row():
             ask_btn = gr.Button("Ask", variant="primary", size="sm")
             reset_btn = gr.Button("Clear", variant="secondary", size="sm")
+            demo_btn = gr.Button("Load demo dataset", variant="secondary", size="sm",
+                                  elem_id="load_demo_btn")
 
         # Conversation
         history_state = gr.State([])
         conversation = gr.HTML(_conversation_html([]))
 
-        # Wire events. api_name=False on each event skips JSON-schema api
-        # introspection which crashes on Dict[str, Any] returns in gradio<5.
+        # ------------- events -------------
         upload.upload(
             fn=on_upload,
             inputs=upload,
-            outputs=[chip_html, upload_status],
+            outputs=[chip_html, conversation, history_state],
+            api_name=False,
+        )
+        upload.clear(
+            fn=lambda: ("", _conversation_html([]), []),
+            outputs=[chip_html, conversation, history_state],
+            api_name=False,
+        )
+        demo_btn.click(
+            fn=on_load_demo,
+            outputs=[chip_html, conversation, history_state],
             api_name=False,
         )
         ask_btn.click(
@@ -499,11 +690,7 @@ def build_app() -> gr.Blocks:
         )
         reset_btn.click(
             fn=on_reset,
-            outputs=[chip_html, question, history_state],
-            api_name=False,
-        ).then(
-            fn=lambda: _conversation_html([]),
-            outputs=conversation,
+            outputs=[chip_html, question, conversation, history_state],
             api_name=False,
         )
 
