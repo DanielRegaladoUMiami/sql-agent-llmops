@@ -20,8 +20,8 @@
 | Model | Base | Status | Link |
 |---|---|---|---|
 | **SQL Generator** | Qwen2.5-Coder-7B-Instruct | Trained (loss 0.27) | [`DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora`](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora) |
-| **Chart Reasoner** | Phi-3-Mini-4k-Instruct | In progress | _coming soon_ |
-| **SVG Renderer** | DeepSeek-Coder-1.3B-Instruct | In progress | _coming soon_ |
+| **Chart Reasoner** | Phi-3-Mini-4k-Instruct | Trained | [`DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora`](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora) · [adapter-only](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only) |
+| **SVG Renderer** | DeepSeek-Coder-1.3B-Instruct | Trained | [`DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora`](https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora) |
 
 ## Datasets on Hugging Face Hub
 
@@ -199,25 +199,29 @@ All three models are fine-tuned with **[Unsloth](https://github.com/unslothai/un
 Training script: [`training/jobs/train_sql_generator_job.py`](training/jobs/train_sql_generator_job.py)
 Launch instructions: [`training/jobs/README.md`](training/jobs/README.md)
 
-### 2. Chart Reasoner — Phi-3-Mini-3.8B (planned)
+### 2. Chart Reasoner — Phi-3-Mini-3.8B (trained)
 
 - **Dataset**: [`chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) — ~75 k rows from **nvBench** (25 k real NL/chart pairs) plus **GPT-4.1-nano knowledge distillation** over `text-to-sql-mix-v2` (50 k pairs generated with a Tufte/Knaflic/Few storytelling system prompt)
 - **Output**: structured JSON spec (`chart_type, encoding, title, sort, color_strategy, annotations, rationale`)
 - **Build script**: [`training/data_pipelines/build_chart_mix.py`](training/data_pipelines/build_chart_mix.py)
+- **Models on Hub**:
+  - [`chart-reasoner-phi3-mini-lora`](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora) — merged 16-bit + adapter
+  - [`chart-reasoner-phi3-mini-adapter-only`](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only) — LoRA adapter only (lighter download)
 
-### 3. SVG Renderer — DeepSeek-Coder-1.3B (planned)
+### 3. SVG Renderer — DeepSeek-Coder-1.3B (trained)
 
 - **Dataset**: [`svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) — ~25 k `(chart_spec → SVG)` pairs from nvBench configs re-rendered via matplotlib's SVG backend, plus chart-shaped SVGs filtered from `umuthopeyildirim/svgen-500k`
 - **Output**: inline SVG string
 - **Build script**: [`training/data_pipelines/build_svg_mix.py`](training/data_pipelines/build_svg_mix.py)
+- **Model on Hub**: [`svg-renderer-deepseek-coder-1.3b-lora`](https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora)
 
 ### Cost summary
 
 | Stage | Compute | Cost |
 |---|---|---|
 | SQL Generator training | HF Jobs L40S, 13.5h | ~$24 |
-| Chart Reasoner training (planned) | HF Jobs T4/A10G, ~3h | ~$2-5 |
-| SVG Renderer training (planned) | HF Jobs T4, ~2h | ~$1 |
+| Chart Reasoner training | Colab / HF Jobs | ~$3 |
+| SVG Renderer training | Colab / HF Jobs | ~$1 |
 | Chart dataset OpenAI synthesis | gpt-4.1-nano Batch API, 50 k | ~$2.50 |
 | Inference hosting | HF Spaces ZeroGPU (free) | $0 |
 
@@ -291,7 +295,7 @@ docker run -p 7860:7860 -e HF_TOKEN=$HF_TOKEN sql-agent
 
 Contributions welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md). Areas where help is most useful:
 - Eval harness on Spider / WikiSQL / BIRD test splits
-- Chart Reasoner training (next on the roadmap)
+- End-to-end orchestrator wiring (the 3 specialist models exist; the connecting glue and Gradio UI need polish)
 - Additional SQL dialects in `text-to-sql-mix-v2` (PostgreSQL, BigQuery)
 
 ---
