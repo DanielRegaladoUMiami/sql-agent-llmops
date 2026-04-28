@@ -1,7 +1,5 @@
 """
-Chart Reasoner: query results -> chart spec via the Phi-3 Mini LoRA.
-
-Model loaded at root module level (ZeroGPU best practice).
+Chart Reasoner: load the trained LoRA on top of Phi-3 Mini base.
 """
 
 import json
@@ -11,6 +9,7 @@ from typing import Any, Dict, List
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
 logger = logging.getLogger(__name__)
 
@@ -18,32 +17,32 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = (
     "You are a data visualization expert. Given a question, the SQL that "
     "answers it, and a sample of the result rows, produce a JSON chart "
-    "specification. Choose the chart type that tells the clearest story. "
-    "Return only valid JSON, no commentary."
+    "specification. Return only valid JSON, no commentary."
 )
 
-DEFAULT_MODEL = "DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora"
+BASE_MODEL = "microsoft/Phi-3-mini-4k-instruct"
+ADAPTER_REPO = "DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only"
 
 
 class ChartReasoner:
-    """Generate chart specs from SQL result sets."""
 
-    def __init__(
-        self,
-        hf_model: str = DEFAULT_MODEL,
-        temperature: float = 0.0,
-        max_new_tokens: int = 300,
-    ) -> None:
-        self.hf_model = hf_model
+    def __init__(self, temperature: float = 0.0, max_new_tokens: int = 300) -> None:
         self.temperature = temperature
         self.max_new_tokens = max_new_tokens
 
-        logger.info(f"Loading chart reasoner at module level: {self.hf_model}")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.hf_model,
+        logger.info(f"Loading chart base: {BASE_MODEL}")
+        self.tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+        base = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL,
             torch_dtype=torch.bfloat16,
             device_map="cuda",
+            trust_remote_code=True,
+        )
+        logger.info(f"Applying LoRA adapter: {ADAPTER_REPO}")
+        self.model = PeftModel.from_pretrained(
+            base,
+            ADAPTER_REPO,
+            torch_dtype=torch.bfloat16,
         )
         self.model.eval()
         logger.info("Chart reasoner ready")
@@ -62,9 +61,9 @@ class ChartReasoner:
             f"SQL: {sql}\n"
             f"Columns: {col_names}\n"
             f"Sample rows: {json.dumps(sample, default=str)}\n\n"
-            "Return JSON with: chart_type (one of: bar, line, scatter, "
-            "pie, area, table), title, x_column, y_column, "
-            "color_column (optional), rationale."
+            "Return JSON with: chart_type (one of: bar, line, scatter, pie, "
+            "area, table), title, x_column, y_column, color_column "
+            "(optional), rationale."
         )
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -87,9 +86,7 @@ class ChartReasoner:
         )
         return self._parse_spec(raw, columns)
 
-    def _parse_spec(
-        self, text: str, columns: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _parse_spec(self, text: str, columns: List[Dict[str, Any]]) -> Dict[str, Any]:
         match = re.search(r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}", text, re.DOTALL)
         if not match:
             return self._fallback_spec(columns)
@@ -97,7 +94,6 @@ class ChartReasoner:
             spec = json.loads(match.group(0))
         except json.JSONDecodeError:
             return self._fallback_spec(columns)
-
         return {
             "chart_type": spec.get("chart_type", "bar").lower(),
             "title": spec.get("title", "Result"),
@@ -111,16 +107,8 @@ class ChartReasoner:
         if not columns:
             return {"chart_type": "table", "title": "Result"}
         if len(columns) == 1:
-            return {
-                "chart_type": "table",
-                "title": "Result",
+            return {"chart_type": "table", "title": "Result",
+                    "x_column": columns[0]["name"], "y_column": None}
+        return {"chart_type": "bar", "title": "Result",
                 "x_column": columns[0]["name"],
-                "y_column": None,
-            }
-        return {
-            "chart_type": "bar",
-            "title": "Result",
-            "x_column": columns[0]["name"],
-            "y_column": columns[1]["name"],
-            "color_column": None,
-        }
+                "y_column": columns[1]["name"], "color_column": None}

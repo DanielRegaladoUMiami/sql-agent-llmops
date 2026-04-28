@@ -1,8 +1,6 @@
 """
-SQL Generator: text-to-SQL via the trained Qwen2.5-Coder-7B LoRA.
-
-Loads at module import time (root level), as required by ZeroGPU best
-practices. Inference happens inside @spaces.GPU in the orchestrator.
+SQL Generator: load the trained LoRA adapter on top of the standard Qwen
+2.5 Coder 7B base. Loaded at module level per ZeroGPU best practice.
 """
 
 import logging
@@ -11,6 +9,7 @@ from typing import Optional
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
 
 logger = logging.getLogger(__name__)
 
@@ -21,33 +20,31 @@ SYSTEM_PROMPT = (
     "Return only the SQL."
 )
 
-DEFAULT_MODEL = "DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora"
+BASE_MODEL = "Qwen/Qwen2.5-Coder-7B-Instruct"
+ADAPTER_REPO = "DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora"
 
 
 class SQLGenerator:
-    """Text-to-SQL generator. Model loaded at construction time onto CUDA."""
 
-    def __init__(
-        self,
-        hf_model: str = DEFAULT_MODEL,
-        temperature: float = 0.0,
-        max_new_tokens: int = 400,
-    ) -> None:
-        self.hf_model = hf_model
+    def __init__(self, temperature: float = 0.0, max_new_tokens: int = 400) -> None:
         self.temperature = temperature
         self.max_new_tokens = max_new_tokens
 
-        logger.info(f"Loading SQL generator at module level: {self.hf_model}")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model)
-        # On ZeroGPU, device_map='cuda' uses emulation mode at module load and
-        # real GPU inside @spaces.GPU calls.
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.hf_model,
+        logger.info(f"Loading SQL base: {BASE_MODEL}")
+        self.tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
+        base = AutoModelForCausalLM.from_pretrained(
+            BASE_MODEL,
             torch_dtype=torch.bfloat16,
             device_map="cuda",
         )
+        logger.info(f"Applying LoRA adapter: {ADAPTER_REPO}")
+        self.model = PeftModel.from_pretrained(
+            base,
+            ADAPTER_REPO,
+            torch_dtype=torch.bfloat16,
+        )
         self.model.eval()
-        logger.info("SQL generator ready")
+        logger.info("SQL generator ready (LoRA applied on Qwen base)")
 
     def generate(self, question: str, schema: str) -> str:
         user_content = f"### Schema\n{schema}\n\n### Question\n{question}"
