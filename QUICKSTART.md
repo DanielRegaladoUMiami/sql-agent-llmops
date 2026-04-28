@@ -6,17 +6,17 @@ A production-grade multi-model orchestrator for natural language SQL generation,
 
 ```
 Question
-    ↓
+ ↓
 [RAG Engine] ← Extract & Index Schema
-    ↓
+ ↓
 [SQL Generator] ← Semantic schema retrieval
-    ↓
+ ↓
 [SQL Executor] ← Execute validated query
-    ↓
+ ↓
 [Chart Reasoner] ← Analyze results
-    ↓
+ ↓
 [SVG Renderer] ← Generate visualization
-    ↓
+ ↓
 Structured Results (SQL + Visualization)
 ```
 
@@ -45,35 +45,35 @@ import asyncio
 logger = setup_logger(__name__)
 
 async def main():
-    # Initialize orchestrator with your database
-    orchestrator = SQLAgentOrchestrator(
-        db_path="path/to/your/database.db",
-        # For GGUF models:
-        # use_gguf=True,
-        # sql_model_path="path/to/model.gguf",
-        # For Hugging Face models (default):
-        sql_model_name="mistralai/Mistral-7B-Instruct-v0.1"
-    )
+ # Initialize orchestrator with your database
+ orchestrator = SQLAgentOrchestrator(
+ db_path="path/to/your/database.db",
+ # For GGUF models:
+ # use_gguf=True,
+ # sql_model_path="path/to/model.gguf",
+ # For Hugging Face models (default):
+ sql_model_name="mistralai/Mistral-7B-Instruct-v0.1"
+ )
 
-    # Load models into memory
-    orchestrator.load_models()
+ # Load models into memory
+ orchestrator.load_models()
 
-    # Process a natural language question
-    result = await orchestrator.process(
-        "What are the top 10 products by total revenue?"
-    )
+ # Process a natural language question
+ result = await orchestrator.process(
+ "What are the top 10 products by total revenue?"
+ )
 
-    # Access results
-    print(f"Generated SQL: {result['sql']}")
-    print(f"Rows returned: {len(result['results'])}")
-    print(f"Chart type: {result['chart_config']['chart_type']}")
-    
-    if result['visualization']:
-        with open("output.svg", "w") as f:
-            f.write(result['visualization'])
+ # Access results
+ print(f"Generated SQL: {result['sql']}")
+ print(f"Rows returned: {len(result['results'])}")
+ print(f"Chart type: {result['chart_config']['chart_type']}")
 
-    # Clean up
-    orchestrator.unload_models()
+ if result['visualization']:
+ with open("output.svg", "w") as f:
+ f.write(result['visualization'])
+
+ # Clean up
+ orchestrator.unload_models()
 
 # Run
 asyncio.run(main())
@@ -83,9 +83,9 @@ asyncio.run(main())
 
 ```python
 async def main():
-    with SQLAgentOrchestrator("database.db") as orchestrator:
-        result = await orchestrator.process("Your question here")
-        print(result)
+ with SQLAgentOrchestrator("database.db") as orchestrator:
+ result = await orchestrator.process("Your question here")
+ print(result)
 ```
 
 ## Loading Data
@@ -106,8 +106,8 @@ db_path = loader.load_json("data.json")
 
 # From Python data
 data = [
-    {"id": 1, "name": "Alice", "revenue": 10000},
-    {"id": 2, "name": "Bob", "revenue": 15000},
+ {"id": 1, "name": "Alice", "revenue": 10000},
+ {"id": 2, "name": "Bob", "revenue": 15000},
 ]
 db_path = loader.load_dict_list(data, table_name="sales")
 ```
@@ -120,27 +120,27 @@ db_path = loader.load_dict_list(data, table_name="sales")
 from src.models.sql_generator import SQLGenerator
 
 sql_gen = SQLGenerator(
-    hf_model="mistralai/Mistral-7B-Instruct-v0.1"
+ hf_model="mistralai/Mistral-7B-Instruct-v0.1"
 )
 sql_gen.load()
 
 schema = """
 Table: products
-  - id: INTEGER [PRIMARY KEY]
-  - name: TEXT
-  - price: REAL
-  - category: TEXT
+ - id: INTEGER [PRIMARY KEY]
+ - name: TEXT
+ - price: REAL
+ - category: TEXT
 
 Table: sales
-  - id: INTEGER [PRIMARY KEY]
-  - product_id: INTEGER
-  - quantity: INTEGER
-  - revenue: REAL
+ - id: INTEGER [PRIMARY KEY]
+ - product_id: INTEGER
+ - quantity: INTEGER
+ - revenue: REAL
 """
 
 sql = sql_gen.generate(
-    question="Total sales by category",
-    schema=schema
+ question="Total sales by category",
+ schema=schema
 )
 print(sql)
 ```
@@ -154,16 +154,16 @@ reasoner = ChartReasoner()
 reasoner.load()
 
 chart_config = reasoner.generate(
-    question="Top products by revenue",
-    sql="SELECT name, SUM(revenue) as total FROM sales GROUP BY name",
-    results=[
-        {"name": "Product A", "total": 50000},
-        {"name": "Product B", "total": 45000},
-    ],
-    columns=[
-        {"name": "name", "type": "text"},
-        {"name": "total", "type": "numeric"},
-    ]
+ question="Top products by revenue",
+ sql="SELECT name, SUM(revenue) as total FROM sales GROUP BY name",
+ results=[
+ {"name": "Product A", "total": 50000},
+ {"name": "Product B", "total": 45000},
+ ],
+ columns=[
+ {"name": "name", "type": "text"},
+ {"name": "total", "type": "numeric"},
+ ]
 )
 ```
 
@@ -176,17 +176,17 @@ renderer = SVGRenderer()
 renderer.load()
 
 svg = renderer.generate(
-    chart_config={
-        "chart_type": "bar",
-        "title": "Sales by Product",
-        "x_column": "name",
-        "y_column": "total",
-        "config": {"show_legend": True}
-    },
-    data=[
-        {"name": "Product A", "total": 50000},
-        {"name": "Product B", "total": 45000},
-    ]
+ chart_config={
+ "chart_type": "bar",
+ "title": "Sales by Product",
+ "x_column": "name",
+ "y_column": "total",
+ "config": {"show_legend": True}
+ },
+ data=[
+ {"name": "Product A", "total": 50000},
+ {"name": "Product B", "total": 45000},
+ ]
 )
 ```
 
@@ -200,8 +200,8 @@ rag.index_database("my_database.db")
 
 # Retrieve relevant schema for a question
 schema = rag.retrieve(
-    "What products had the highest revenue?",
-    top_k=5
+ "What products had the highest revenue?",
+ top_k=5
 )
 print(schema)
 
@@ -218,12 +218,12 @@ executor = SQLExecutor("database.db")
 
 # Execute a query
 results, columns = executor.execute(
-    "SELECT * FROM products WHERE price > 100 LIMIT 10"
+ "SELECT * FROM products WHERE price > 100 LIMIT 10"
 )
 
 # Validate SQL
 is_valid = executor.validate_query(
-    "SELECT * FROM products"
+ "SELECT * FROM products"
 )
 
 # Get table names
@@ -238,17 +238,17 @@ schema = executor.get_table_schema("products")
 ### Option 1: Hugging Face Models (Default)
 ```python
 orchestrator = SQLAgentOrchestrator(
-    db_path="database.db",
-    sql_model_name="mistralai/Mistral-7B-Instruct-v0.1"
+ db_path="database.db",
+ sql_model_name="mistralai/Mistral-7B-Instruct-v0.1"
 )
 ```
 
 ### Option 2: GGUF Models (Quantized)
 ```python
 orchestrator = SQLAgentOrchestrator(
-    db_path="database.db",
-    use_gguf=True,
-    sql_model_path="/path/to/model.gguf"
+ db_path="database.db",
+ use_gguf=True,
+ sql_model_path="/path/to/model.gguf"
 )
 ```
 
@@ -268,8 +268,8 @@ logger = setup_logger("my_app", level=logging.DEBUG)
 
 # File logging
 logger = setup_logger(
-    "my_app",
-    log_file=Path("logs/app.log")
+ "my_app",
+ log_file=Path("logs/app.log")
 )
 ```
 
@@ -334,15 +334,15 @@ pip install chromadb
 ```
 sql-agent-llmops/
 ├── src/
-│   ├── orchestrator/       # Main pipeline coordinator
-│   ├── models/            # SQL Generator, Chart Reasoner, SVG Renderer
-│   ├── rag/               # Schema retrieval and indexing
-│   ├── data_processing/   # CSV/Excel/JSON loaders
-│   ├── visualization/     # SVG and Plotly rendering
-│   └── utils/             # Logger and SQL executor
-├── pyproject.toml         # Modern Python packaging
-├── requirements.txt       # Direct dependencies
-└── QUICKSTART.md          # This file
+│ ├── orchestrator/ # Main pipeline coordinator
+│ ├── models/ # SQL Generator, Chart Reasoner, SVG Renderer
+│ ├── rag/ # Schema retrieval and indexing
+│ ├── data_processing/ # CSV/Excel/JSON loaders
+│ ├── visualization/ # SVG and Plotly rendering
+│ └── utils/ # Logger and SQL executor
+├── pyproject.toml # Modern Python packaging
+├── requirements.txt # Direct dependencies
+└── QUICKSTART.md # This file
 ```
 
 ## Next Steps

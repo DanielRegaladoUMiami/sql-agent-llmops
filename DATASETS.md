@@ -1,4 +1,4 @@
-# 📦 Datasets
+# Datasets
 
 This page tracks all training datasets used (or planned) for the three
 specialist models in SQL Agent LLMOps. Every dataset we publish is built
@@ -6,24 +6,24 @@ by reproducible UV scripts under `training/data_pipelines/`.
 
 ---
 
-## 🗺️ Overview
+## Overview
 
 | Model | Base checkpoint | Dataset | Status |
 |-------|-----------------|---------|--------|
-| **SQL Generator** | `Qwen/Qwen2.5-Coder-7B-Instruct` | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) | ✅ Published |
-| **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) | ✅ Published |
-| **SVG Renderer** | `deepseek-ai/deepseek-coder-1.3b-instruct` | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) | ✅ Published |
+| **SQL Generator** | `Qwen/Qwen2.5-Coder-7B-Instruct` | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) | Published |
+| **Chart Reasoner** | `microsoft/Phi-3-mini-4k-instruct` | [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) | Published |
+| **SVG Renderer** | `deepseek-ai/deepseek-coder-1.3b-instruct` | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) | Published |
 
 ---
 
-## 1️⃣ SQL Generator — `text-to-sql-mix-v2`
+## 1. SQL Generator — `text-to-sql-mix-v2`
 
-- **🔗 Hub**: https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2
-- **📝 Build script**: [`training/data_pipelines/build_sql_mix.py`](training/data_pipelines/build_sql_mix.py)
-- **🧮 Size**: 761,155 unique rows · train 723,097 / val 19,029 / test 19,029
-- **📐 Schema**: `id · instruction · schema_context · sql · source · dialect · difficulty`
-- **⚖️ License**: Apache-2.0 on the pipeline; row content inherits upstream license
-- **🌐 Languages**: English (majority) + Chinese (medical subsets from NSText2SQL)
+- **Hub**: https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2
+- **Build script**: [`training/data_pipelines/build_sql_mix.py`](training/data_pipelines/build_sql_mix.py)
+- **Size**: 761,155 unique rows · train 723,097 / val 19,029 / test 19,029
+- **Schema**: `id · instruction · schema_context · sql · source · dialect · difficulty`
+- **License**: Apache-2.0 on the pipeline; row content inherits upstream license
+- **Languages**: English (majority) + Chinese (medical subsets from NSText2SQL)
 
 ### Sources combined (10)
 
@@ -51,7 +51,7 @@ uv run training/data_pipelines/build_sql_mix.py --sample 200
 
 # HF Jobs (no laptop needed)
 hf jobs uv run --flavor cpu-basic --timeout 2h \
-    training/data_pipelines/build_sql_mix.py --push
+ training/data_pipelines/build_sql_mix.py --push
 ```
 
 ### History
@@ -63,18 +63,18 @@ hf jobs uv run --flavor cpu-basic --timeout 2h \
 
 ---
 
-## 2️⃣ Chart Reasoner — `chart-reasoning-mix-v1` (in progress)
+## 2. Chart Reasoner — `chart-reasoning-mix-v1` (in progress)
 
 **Goal**: fine-tune Phi-3 Mini to map `(question, SQL result schema)` → **storytelling-grade chart specification** (chart type, encoding, insight-driven title, sort, color strategy, annotations, rationale).
 
-- **📝 Build script**: [`training/data_pipelines/build_chart_mix.py`](training/data_pipelines/build_chart_mix.py) — multi-stage UV pipeline (`nvbench` → `synth-prepare` → `synth-submit` → `synth-fetch` → `combine-push`)
+- **Build script**: [`training/data_pipelines/build_chart_mix.py`](training/data_pipelines/build_chart_mix.py) — multi-stage UV pipeline (`nvbench` → `synth-prepare` → `synth-submit` → `synth-fetch` → `combine-push`)
 
 ### Sources
 
 | Source | Rows | Status |
 |--------|------|--------|
-| [nvBench (Tsinghua DB Group)](https://github.com/TsinghuaDatabaseGroup/nvBench) | **25,752** | ✅ Loaded · 7,247 entries × ~3.5 NL paraphrases each |
-| OpenAI gpt-4.1-nano synthesis (over `text-to-sql-mix-v2`) | ~50,000 (target) | 🟠 Pending (Batch API submit) |
+| [nvBench (Tsinghua DB Group)](https://github.com/TsinghuaDatabaseGroup/nvBench) | **25,752** | Loaded · 7,247 entries × ~3.5 NL paraphrases each |
+| OpenAI gpt-4.1-nano synthesis (over `text-to-sql-mix-v2`) | ~50,000 (target) | Pending (Batch API submit) |
 
 ### Storytelling principles baked in
 
@@ -93,12 +93,12 @@ Each synthesized example includes: `chart_type`, full `encoding`, **insight-driv
 
 ---
 
-## 3️⃣ SVG Renderer — `svg-chart-render-v1` ✅
+## 3. SVG Renderer — `svg-chart-render-v1`
 
-- **🔗 Hub**: https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1
-- **📝 Build script**: [`training/data_pipelines/build_svg_mix.py`](training/data_pipelines/build_svg_mix.py)
-- **🧮 Schema**: `id · chart_spec (JSON str) · svg_code · source · metadata (JSON str)`
-- **⚖️ License**: Apache-2.0 on pipeline; row content per source
+- **Hub**: https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1
+- **Build script**: [`training/data_pipelines/build_svg_mix.py`](training/data_pipelines/build_svg_mix.py)
+- **Schema**: `id · chart_spec (JSON str) · svg_code · source · metadata (JSON str)`
+- **License**: Apache-2.0 on pipeline; row content per source
 
 ### Sources
 
@@ -118,7 +118,7 @@ uv run training/data_pipelines/build_svg_mix.py svgen --max 15000
 
 # 3. Combine + dedup + split + push to HF
 uv run training/data_pipelines/build_svg_mix.py combine-push \
-    --inputs data/svg_synth.jsonl data/svg_svgen.jsonl --push
+ --inputs data/svg_synth.jsonl data/svg_svgen.jsonl --push
 ```
 
 ### Storage format note
@@ -130,14 +130,14 @@ across rows.
 
 ---
 
-## 🛠️ Build environment
+## Build environment
 
 All pipelines are self-contained UV scripts (PEP 723) with inline deps. They
-run identically **locally** and on **[HF Jobs](https://huggingface.co/docs/huggingface_hub/en/guides/jobs)**.
+run identically **locally**and on **[HF Jobs](https://huggingface.co/docs/huggingface_hub/en/guides/jobs)**.
 
 ```bash
 # One-time login
-hf auth login  # token with `write` scope
+hf auth login # token with `write` scope
 
 # Run any pipeline
 uv run training/data_pipelines/<script>.py --help

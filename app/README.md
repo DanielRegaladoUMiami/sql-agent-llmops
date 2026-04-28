@@ -64,19 +64,19 @@ The app will be available at `http://localhost:7860`
 ### Models
 
 1. **SQL Generator**: Qwen 2.5 Coder 7B
-   - Fine-tuned for SQL generation
-   - Supports multiple databases (MySQL, PostgreSQL, SQLite)
-   - LoRA adapters for efficient fine-tuning
+ - Fine-tuned for SQL generation
+ - Supports multiple databases (MySQL, PostgreSQL, SQLite)
+ - LoRA adapters for efficient fine-tuning
 
 2. **Chart Reasoner**: Phi-3 Mini 3.8B
-   - Recommends chart types based on query results
-   - Generates chart configurations
-   - Knowledge distilled from larger models
+ - Recommends chart types based on query results
+ - Generates chart configurations
+ - Knowledge distilled from larger models
 
 3. **SVG Renderer**: DeepSeek Coder 1.3B
-   - Generates optimized SVG code
-   - Lightweight for runtime rendering
-   - Fine-tuned for different chart types
+ - Generates optimized SVG code
+ - Lightweight for runtime rendering
+ - Fine-tuned for different chart types
 
 ## Usage Examples
 
@@ -163,9 +163,9 @@ If you use this project in your research, please cite:
 
 ```bibtex
 @software{sql_agent_2024,
-  title={SQL Agent: Multi-Model SQL Query Generation and Visualization},
-  author={Your Name},
-  year={2024},
-  url={https://huggingface.co/spaces/your-org/sql-agent}
+ title={SQL Agent: Multi-Model SQL Query Generation and Visualization},
+ author={Your Name},
+ year={2024},
+ url={https://huggingface.co/spaces/your-org/sql-agent}
 }
 ```

@@ -7,28 +7,43 @@
 ![HuggingFace Spaces](https://img.shields.io/badge/HuggingFace-Spaces-FFD21E?style=for-the-badge&logo=huggingface)
 ![Unsloth](https://img.shields.io/badge/Unsloth-Optimized-FF6B6B?style=for-the-badge)
 
-**🔗 A modular, multi-model SQL Agent with advanced orchestration, fine-tuned on open-source LLMs**
+**A modular, multi-model SQL Agent fine-tuned on open-source LLMs and deployed on HuggingFace Spaces**
 
-[📚 Documentation](#-features) • [🚀 Quick Start](#-quick-start) • [🏗️ Architecture](#-architecture) • [📦 Datasets](DATASETS.md) • [📝 Training](#-how-training-works) • [🤝 Contributing](#-contributing)
-
-### 📦 Training datasets (all public on HuggingFace)
-
-[![text-to-sql-mix-v2](https://img.shields.io/badge/🤗-text--to--sql--mix--v2-FFD21E?style=flat-square)](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2)
-[![chart-reasoning-mix-v1](https://img.shields.io/badge/🤗-chart--reasoning--mix--v1-F7A41D?style=flat-square)](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1)
-[![svg-chart-render-v1](https://img.shields.io/badge/🤗-svg--chart--render--v1-FFD21E?style=flat-square)](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1)
+[Quick Start](#quick-start) • [Architecture](#architecture) • [Models](#models-on-hugging-face-hub) • [Datasets](DATASETS.md) • [Training](#training) • [Contributing](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## 📖 Overview
+## Models on Hugging Face Hub
 
-SQL Agent LLMOps is a **production-ready, open-source SQL Agent** that orchestrates multiple fine-tuned language models to convert natural language questions into SQL queries, execute them, and generate interactive visualizations. Built for scalability and deployed on HuggingFace Spaces with zero-cost GPU acceleration.
+| Model | Base | Status | Link |
+|---|---|---|---|
+| **SQL Generator** | Qwen2.5-Coder-7B-Instruct | Trained (loss 0.27) | [`DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora`](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora) |
+| **Chart Reasoner** | Phi-3-Mini-4k-Instruct | In progress | _coming soon_ |
+| **SVG Renderer** | DeepSeek-Coder-1.3B-Instruct | In progress | _coming soon_ |
 
-**Key Innovation:** Multi-model orchestration where each specialized model excels at its domain:
-- **SQL Generation** - Qwen 2.5 Coder 7B (fine-tuned)
-- **Chart Reasoning** - Phi-3 Mini 3.8B (knowledge-distilled)
-- **SVG Rendering** - DeepSeek Coder 1.3B (fine-tuned)
+## Datasets on Hugging Face Hub
+
+| Dataset | Rows | Purpose | Link |
+|---|---|---|---|
+| **text-to-sql-mix-v2** | 761,155 | NL to SQL training (10 sources merged) | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) |
+| **chart-reasoning-mix-v1** | ~75,000 | Chart spec reasoning (nvBench + GPT distillation) | [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) |
+| **svg-chart-render-v1** | ~25,000 | Chart spec to inline SVG | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) |
+
+Full dataset documentation: [`DATASETS.md`](DATASETS.md)
+
+---
+
+## Overview
+
+SQL Agent LLMOps orchestrates three specialized fine-tuned language models to convert natural-language questions into SQL queries, execute them against user-uploaded data, and render insight-driven visualizations. Each model is small enough to run on consumer GPUs and is independently swappable.
+
+**Key design choices:**
+- **Multi-model orchestration** — one specialist per task, not one giant monolith
+- **In-memory only** — user data lives in RAM (DuckDB + ChromaDB), never persisted
+- **QLoRA fine-tunes** — 4-bit base + small adapters, deployable on free HF Spaces ZeroGPU
+- **Reproducible training** — every dataset and training script is open-sourced and re-runnable
 
 ---
 
@@ -80,330 +95,226 @@ flowchart LR
     class FB fallback
 ```
 
-Flow: user uploads data and asks a question → Orchestrator → SQL Generator emits SQL → DuckDB executes → Chart Reasoner designs a chart spec → SVG Renderer emits inline SVG. If SVG generation fails, Plotly renders the chart programmatically from the spec.
-
-All three specialist models are fine-tuned via Unsloth QLoRA on datasets we built and published to HuggingFace — see [DATASETS.md](DATASETS.md).
+**Flow**: user uploads data and asks a question, the Orchestrator routes it to the SQL Generator which emits SQL, DuckDB executes the query, the Chart Reasoner designs a chart spec from the result set, and the SVG Renderer emits inline SVG. If SVG generation fails, Plotly renders the chart programmatically from the spec.
 
 ---
 
-## ✨ Features
-
-- **🤖 Multi-Model Orchestration** - Specialized models for SQL generation, chart reasoning, and SVG rendering
-- **⚡ ZeroGPU Acceleration** - SQL Generator runs on free HuggingFace ZeroGPU
-- **🔍 In-Memory RAG** - User data never persisted or used for training (ChromaDB RAM-only)
-- **🎯 Smart Fallbacks** - SVG rendering fails gracefully with Plotly backup
-- **🧠 Knowledge Distillation** - Chart Reasoner trained via free inference API
-- **📦 Open Weights** - All models fine-tuned on publicly available models
-- **🚀 Production Ready** - Deployed on HuggingFace Spaces (free tier)
-- **♻️ Lightweight Training** - Unsloth QLoRA reduces memory by 4x
-- **📊 Data Privacy** - No data persistence, no telemetry, fully transparent
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
+
 ```bash
 python >= 3.10
-pip install -r requirements.txt
 ```
 
-### Installation
+### Install
+
 ```bash
-git clone https://github.com/yourusername/sql-agent-llmops.git
+git clone https://github.com/DanielRegaladoUMiami/sql-agent-llmops.git
 cd sql-agent-llmops
 pip install -e .
 ```
 
-### Run Locally
-```bash
-# Start the Gradio web interface
-python app.py
+### Run locally
 
-# Or run the CLI
-python -m sql_agent.cli --csv "data.csv" --question "What are the top 5 products?"
+```bash
+# Gradio UI
+python app/app.py
+
+# Or via Docker
+docker compose up
 ```
 
-### Deploy to HuggingFace Spaces
-1. Fork this repository
-2. Create a new Space on HuggingFace
-3. Connect to this repo
-4. Add ZeroGPU hardware (free tier available)
-5. Done! Your agent is live
+For step-by-step setup, training reproduction, and deployment, see [`QUICKSTART.md`](QUICKSTART.md).
 
 ---
 
-## 📁 Project Structure
+## Project structure
 
 ```
 sql-agent-llmops/
-├── README.md                    # This file
-├── LICENSE                      # Apache 2.0
-├── requirements.txt             # Python dependencies
-├── setup.py                     # Package configuration
+├── README.md                  # This file
+├── DATASETS.md                # Dataset index
+├── QUICKSTART.md              # Setup + reproduction guide
+├── CONTRIBUTING.md            # Contribution guide
+├── LICENSE                    # Apache 2.0
+├── pyproject.toml             # Package config
+├── requirements.txt           # Runtime dependencies
+├── Dockerfile + docker-compose.yml
 │
-├── sql_agent/
-│   ├── __init__.py
-│   ├── cli.py                  # Command-line interface
-│   ├── orchestrator.py         # Multi-model orchestration logic
-│   ├── schema_extractor.py     # SQL schema extraction
-│   ├── rag_engine.py           # ChromaDB RAG retrieval
-│   ├── sql_generator.py        # SQL Generation (Qwen 2.5 Coder)
-│   ├── chart_reasoner.py       # Chart Config (Phi-3 Mini)
-│   ├── svg_renderer.py         # SVG Rendering (DeepSeek Coder)
-│   └── utils.py                # Helper functions
+├── src/
+│   ├── orchestrator/          # Multi-model orchestration
+│   ├── models/                # SQL Gen / Chart Reasoner / SVG Renderer wrappers
+│   ├── rag/                   # ChromaDB schema RAG
+│   ├── data_processing/       # CSV/JSON ingestion + schema extraction
+│   ├── visualization/         # Plotly fallback renderer
+│   └── utils/
 │
-├── models/
-│   ├── sql_generator_lora/     # QLoRA adapter for Qwen 2.5 Coder 7B
-│   ├── chart_reasoner_lora/    # QLoRA adapter for Phi-3 Mini 3.8B
-│   ├── svg_renderer_lora/      # QLoRA adapter for DeepSeek Coder 1.3B
-│   └── config.yaml             # Model configurations
+├── app/
+│   ├── app.py                 # Gradio UI (HF Spaces entry point)
+│   └── requirements.txt
+│
+├── configs/
+│   ├── model_config.yaml
+│   ├── training_config.yaml
+│   └── deployment_config.yaml
 │
 ├── training/
-│   ├── sql_generator_training.py      # Qwen fine-tuning on Colab
-│   ├── chart_reasoner_training.py     # Phi-3 knowledge distillation
-│   ├── svg_renderer_training.py       # DeepSeek fine-tuning
-│   ├── datasets/
-│   │   ├── sql_examples.jsonl         # 3.3M SQL training examples
-│   │   ├── chart_examples.jsonl       # 100K chart config examples
-│   │   └── svg_examples.jsonl         # 50K SVG examples
-│   └── scripts/
-│       ├── prepare_datasets.py        # Data processing
-│       └── evaluate.py                # Model evaluation
+│   ├── data_pipelines/        # UV scripts that build the 3 datasets
+│   ├── jobs/                  # HF Jobs training scripts (production)
+│   ├── notebooks/             # Colab notebooks (exploratory)
+│   ├── sql_generator/
+│   ├── chart_reasoner/
+│   └── svg_renderer/
 │
-├── tests/
-│   ├── test_orchestrator.py
-│   ├── test_rag_engine.py
-│   └── test_models.py
-│
-├── app.py                      # Gradio web interface
-├── space_requirements.txt       # HuggingFace Spaces dependencies
-└── .github/
-    └── ISSUE_TEMPLATE/
-        ├── bug_report.md
-        └── feature_request.md
+└── tests/
+    ├── test_orchestrator.py
+    ├── test_plotly_fallback.py
+    ├── test_schema_extractor.py
+    └── test_sql_executor.py
 ```
 
 ---
 
-## 🧠 How Training Works
+## Training
 
-All three models are fine-tuned with **[Unsloth](https://github.com/unslothai/unsloth)** (4-bit QLoRA) using training notebooks in [`training/notebooks/`](training/notebooks/). The full data pipeline is open-source in [`training/data_pipelines/`](training/data_pipelines/) — see [DATASETS.md](DATASETS.md) for the dataset index.
+All three models are fine-tuned with **[Unsloth](https://github.com/unslothai/unsloth)** (4-bit QLoRA) + TRL `SFTTrainer`. Production training runs on [Hugging Face Jobs](https://huggingface.co/docs/hub/jobs); exploratory work happens in `training/notebooks/`.
 
-### 1. SQL Generator — Qwen 2.5 Coder 7B
-- **Dataset:** [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) — **761,155 unique rows** (train 723k / val 19k / test 19k) combining 10 public text-to-SQL sources (Spider, WikiSQL, sql-create-context, Gretel, DuckDB-text2sql, NSText2SQL, etc.). Built with [`build_sql_mix.py`](training/data_pipelines/build_sql_mix.py).
-- **Method:** Unsloth QLoRA (rank 16, 4-bit base). Runs on Colab Pro A100 in ~5–8 h / epoch.
-- **Inference:** HuggingFace Spaces ZeroGPU.
+### 1. SQL Generator — Qwen2.5-Coder-7B (trained)
 
-### 2. Chart Reasoner — Phi-3 Mini 3.8B
-- **Dataset:** [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) — ~75 k rows combining **nvBench** (Tsinghua DB Group, 25 k real NL↔chart pairs) + **OpenAI gpt-4.1-nano synthesis** over `text-to-sql-mix-v2` (50 k pairs generated with a storytelling-expert system prompt distilling Tufte / Knaflic / Few principles). Built with [`build_chart_mix.py`](training/data_pipelines/build_chart_mix.py).
-- **Method:** Unsloth QLoRA on T4 free tier (~2–3 h / epoch).
-- **Output:** structured JSON spec (chart_type, encoding, insight-driven title, sort, color_strategy, annotations, rationale).
+| Setting | Value |
+|---|---|
+| Dataset | [`text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) — 761,155 rows |
+| Examples used (after seq-len filter ≤ 1024) | **672,949** (93.1%) |
+| Sequences after packing | 154,462 |
+| LoRA | r=16, α=32, on `q/k/v/o/gate/up/down_proj` |
+| Hardware | 1× NVIDIA L40S (48 GB) on HF Jobs |
+| Throughput | 4.93 s/step (effective batch 16, seq 1024) |
+| Total steps | 9,654 (1 epoch) |
+| Wall-clock time | **13.5 hours** |
+| Final training loss | **0.2658** |
+| Cost | ~$24 |
+| Output | [`sql-generator-qwen25-coder-7b-lora`](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora) |
 
-### 3. SVG Renderer — DeepSeek Coder 1.3B
-- **Dataset:** [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) — ~25 k `(chart_spec → svg)` pairs: nvBench chart configs re-rendered with matplotlib's SVG backend + chart-shaped SVGs filtered from `umuthopeyildirim/svgen-500k`. Built with [`build_svg_mix.py`](training/data_pipelines/build_svg_mix.py).
-- **Method:** Unsloth QLoRA on T4 free tier (~1–2 h / epoch).
-- **Output:** inline SVG string.
+Training script: [`training/jobs/train_sql_generator_job.py`](training/jobs/train_sql_generator_job.py)
+Launch instructions: [`training/jobs/README.md`](training/jobs/README.md)
 
-### 💰 Cost breakdown
+### 2. Chart Reasoner — Phi-3-Mini-3.8B (planned)
 
-| Piece | Compute | Cost |
-|-------|---------|------|
-| SQL Generator training | Colab Pro A100 (~6 h) | **$10/mo** |
-| Chart Reasoner training | Colab T4 free | **$0** |
-| SVG Renderer training | Colab T4 free | **$0** |
-| Chart dataset OpenAI synthesis | gpt-4.1-nano Batch API (50 k) | **~$2.50** |
-| **End-to-end training** | | **~$12** |
-| Inference hosting | HF Spaces ZeroGPU (free tier) | **$0** |
+- **Dataset**: [`chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) — ~75 k rows from **nvBench** (25 k real NL/chart pairs) plus **GPT-4.1-nano knowledge distillation** over `text-to-sql-mix-v2` (50 k pairs generated with a Tufte/Knaflic/Few storytelling system prompt)
+- **Output**: structured JSON spec (`chart_type, encoding, title, sort, color_strategy, annotations, rationale`)
+- **Build script**: [`training/data_pipelines/build_chart_mix.py`](training/data_pipelines/build_chart_mix.py)
+
+### 3. SVG Renderer — DeepSeek-Coder-1.3B (planned)
+
+- **Dataset**: [`svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) — ~25 k `(chart_spec → SVG)` pairs from nvBench configs re-rendered via matplotlib's SVG backend, plus chart-shaped SVGs filtered from `umuthopeyildirim/svgen-500k`
+- **Output**: inline SVG string
+- **Build script**: [`training/data_pipelines/build_svg_mix.py`](training/data_pipelines/build_svg_mix.py)
+
+### Cost summary
+
+| Stage | Compute | Cost |
+|---|---|---|
+| SQL Generator training | HF Jobs L40S, 13.5h | ~$24 |
+| Chart Reasoner training (planned) | HF Jobs T4/A10G, ~3h | ~$2-5 |
+| SVG Renderer training (planned) | HF Jobs T4, ~2h | ~$1 |
+| Chart dataset OpenAI synthesis | gpt-4.1-nano Batch API, 50 k | ~$2.50 |
+| Inference hosting | HF Spaces ZeroGPU (free) | $0 |
 
 ---
 
-## 🔐 Data & Privacy (RAG)
+## Inference
 
-### How RAG Works
-1. **Upload:** User uploads CSV/JSON data
-2. **Schema Extraction:** Automatic table schema detection
-3. **Indexing:** ChromaDB in-memory vector index
-4. **Retrieval:** Semantic search on user query
-
-### Privacy Guarantees
-- ✅ **In-Memory Only:** Data stored in RAM, never persisted to disk
-- ✅ **No Training Data:** User data never used for model training
-- ✅ **No Telemetry:** No logging, no analytics, fully transparent
-- ✅ **Ephemeral Sessions:** All data deleted when session ends
-- ✅ **No External API Calls:** RAG runs locally on your instance
+### Use the trained SQL Generator
 
 ```python
-# RAG configuration (production-safe)
-from chromadb.config import Settings
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-settings = Settings(
-    is_persistent=False,  # RAM-only
-    anonymized_telemetry=False,
-    allow_reset=True,
-)
-client = chromadb.Client(settings)
+REPO = "DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora"
+
+model = AutoModelForCausalLM.from_pretrained(REPO, torch_dtype="auto", device_map="auto")
+tokenizer = AutoTokenizer.from_pretrained(REPO)
+
+messages = [
+ {"role": "system", "content": "You are a SQL expert. Given a SQL schema and a natural-language question, generate a correct SQL query answering the question. Return only the SQL."},
+ {"role": "user", "content": "### Schema\nCREATE TABLE players (id INT, name VARCHAR, hometown VARCHAR);\n\n### Question\nList all players from Tampa, Florida."},
+]
+input_ids = tokenizer.apply_chat_template(messages, tokenize=True, add_generation_prompt=True, return_tensors="pt").to(model.device)
+out = model.generate(input_ids, max_new_tokens=256, do_sample=False)
+print(tokenizer.decode(out[0][input_ids.shape[1]:], skip_special_tokens=True))
+```
+
+Full usage examples (LoRA-only loading, Unsloth, etc.) on the [model card](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora).
+
+---
+
+## Data and Privacy
+
+- **In-memory only** — uploaded data lives in DuckDB + ChromaDB RAM, never written to disk
+- **No telemetry** — no logging, no analytics
+- **No retraining on user data** — models are frozen between releases
+- **Ephemeral sessions** — everything is wiped when the Space restarts
+
+```python
+# Production-safe RAG config
+from chromadb.config import Settings
+client = chromadb.Client(Settings(
+ is_persistent=False,
+ anonymized_telemetry=False,
+ allow_reset=True,
+))
 ```
 
 ---
 
-## 🚀 Deployment
+## Deployment
 
-### HuggingFace Spaces (Recommended)
+### HuggingFace Spaces (recommended, free tier)
 
-**Free Tier Setup:**
-1. Create Space with Gradio template
-2. Link this GitHub repo
-3. Add ZeroGPU hardware (free, persistent)
-4. Set environment variables:
-   ```
-   HF_TOKEN=hf_xxxxx
-   ZeroGPU=true
-   ```
-5. Done! Auto-deploys on each push
+1. Fork this repo
+2. Create a new Space, Gradio template
+3. Link the Space to your fork
+4. Add ZeroGPU hardware (free)
+5. Set secret `HF_TOKEN` (read-only is enough)
+6. Auto-deploys on push
 
-**Specs:**
-- CPU: 4 vCPU (shared)
-- RAM: 16GB (shared)
-- Storage: 50GB (ephemeral)
-- GPU: T4 ZeroGPU (free, on-demand)
+### Docker
 
-### Docker Deployment
 ```bash
 docker build -t sql-agent .
-docker run -p 7860:7860 sql-agent
-```
-
-### Requirements
-```txt
-# Core
-gradio>=4.0.0
-pydantic>=2.0.0
-chromadb>=0.3.21
-
-# Models
-transformers>=4.35.0
-torch>=2.0.0
-unsloth>=2024.01
-
-# Utils
-pandas>=2.0.0
-numpy>=1.24.0
+docker run -p 7860:7860 -e HF_TOKEN=$HF_TOKEN sql-agent
 ```
 
 ---
 
-## 🗺️ Roadmap
+## Contributing
 
-### v0.1 (Current) - Core Agent
-- [x] Multi-model orchestration
-- [x] SQL generation + execution
-- [x] Chart reasoning
-- [x] SVG rendering with Plotly fallback
-- [x] ChromaDB RAG
-- [x] HuggingFace Spaces deployment
-- [ ] Basic documentation
-
-### v0.2 - Enhanced Features
-- [ ] Schema caching (intelligent refresh)
-- [ ] Multi-table joins (cross-schema reasoning)
-- [ ] Custom chart themes
-- [ ] Query optimization suggestions
-- [ ] Batch query processing
-- [ ] Web UI improvements (dark mode, export)
-
-### v0.3 - Production Scale
-- [ ] Async execution pipeline
-- [ ] Model quantization (ONNX, TensorRT)
-- [ ] Caching layer for common queries
-- [ ] Multi-user sessions
-- [ ] Usage analytics dashboard
-- [ ] Custom model training pipeline
+Contributions welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md). Areas where help is most useful:
+- Eval harness on Spider / WikiSQL / BIRD test splits
+- Chart Reasoner training (next on the roadmap)
+- Additional SQL dialects in `text-to-sql-mix-v2` (PostgreSQL, BigQuery)
 
 ---
 
-## 🤝 Contributing
+## Citation
 
-We welcome contributions! Here's how to get started:
+```bibtex
+@misc{regalado2026sqlagent,
+ author = {Daniel Regalado Cardoso},
+ title = {SQL Agent LLMOps: Multi-Model Orchestration for Text-to-SQL with Visualization},
+ year = {2026},
+ howpublished = {\url{https://github.com/DanielRegaladoUMiami/sql-agent-llmops}},
+}
+```
 
-1. **Fork & Clone**
-   ```bash
-   git clone https://github.com/yourusername/sql-agent-llmops.git
-   cd sql-agent-llmops
-   ```
+## License
 
-2. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature
-   ```
+Apache 2.0 — see [`LICENSE`](LICENSE).
 
-3. **Install Development Dependencies**
-   ```bash
-   pip install -e ".[dev]"
-   ```
+## Acknowledgments
 
-4. **Make Your Changes & Test**
-   ```bash
-   pytest tests/
-   ```
-
-5. **Submit a Pull Request**
-   - Describe your changes clearly
-   - Reference any related issues
-   - Ensure tests pass
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
----
-
-## 📜 License
-
-This project is licensed under the **Apache License 2.0** - see [LICENSE](LICENSE) file for details.
-
-Apache 2.0 allows:
-- ✅ Commercial use
-- ✅ Modification
-- ✅ Distribution
-- ℹ️ Must include license and copyright notice
-
----
-
-## 👤 Author
-
-**Daniel Regalado Cardoso**
-
-- GitHub: [@yourgithub](https://github.com/yourgithub)
-- Email: contact@example.com
-- Twitter: [@yourhandle](https://twitter.com/yourhandle)
-
----
-
-## 🙏 Acknowledgments
-
-- **Unsloth** - Memory-efficient fine-tuning
-- **HuggingFace** - Model hosting & Spaces
-- **ChromaDB** - Vector embeddings
-- **Gradio** - Web interface framework
-- **OpenAI Evals** - Evaluation framework
-- Community datasets: WikiSQL, Spider, and more
-
----
-
-## 📞 Support
-
-- 🐛 **Report Bugs:** [GitHub Issues](https://github.com/yourusername/sql-agent-llmops/issues)
-- 💡 **Request Features:** [Feature Requests](https://github.com/yourusername/sql-agent-llmops/issues/new?template=feature_request.md)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/yourusername/sql-agent-llmops/discussions)
-- 📧 **Email:** contact@example.com
-
----
-
-<div align="center">
-
-⭐ **If you find this project useful, please consider giving it a star!** ⭐
-
-[GitHub](https://github.com/yourusername/sql-agent-llmops) • [HuggingFace](https://huggingface.co/spaces/yourusername/sql-agent-llmops)
-
-Made with ❤️ by the SQL Agent team
-
-</div>
+- [Unsloth](https://github.com/unslothai/unsloth) — 2x faster QLoRA training
+- [TRL](https://github.com/huggingface/trl) — `SFTTrainer`
+- [Hugging Face Jobs](https://huggingface.co/docs/hub/jobs) — training infrastructure
+- Qwen, Microsoft, DeepSeek teams — base models
+- All authors of the source datasets (see [`DATASETS.md`](DATASETS.md))

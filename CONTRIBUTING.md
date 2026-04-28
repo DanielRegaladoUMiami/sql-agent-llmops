@@ -31,54 +31,54 @@ Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md).
 ### Submitting Code
 
 1. **Fork the repository**
-   ```bash
-   git clone https://github.com/yourusername/sql-agent-llmops.git
-   cd sql-agent-llmops
-   ```
+ ```bash
+ git clone https://github.com/yourusername/sql-agent-llmops.git
+ cd sql-agent-llmops
+ ```
 
 2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   # or: git checkout -b fix/your-bug-fix
-   ```
+ ```bash
+ git checkout -b feature/your-feature-name
+ # or: git checkout -b fix/your-bug-fix
+ ```
 
 3. **Set up development environment**
-   ```bash
-   pip install -e ".[dev]"
-   ```
+ ```bash
+ pip install -e ".[dev]"
+ ```
 
 4. **Make your changes**
-   - Follow PEP 8 style guidelines
-   - Write clear, descriptive commit messages
-   - Add tests for new functionality
-   - Update documentation as needed
+ - Follow PEP 8 style guidelines
+ - Write clear, descriptive commit messages
+ - Add tests for new functionality
+ - Update documentation as needed
 
 5. **Run tests and checks**
-   ```bash
-   # Run unit tests
-   pytest tests/ -v
+ ```bash
+ # Run unit tests
+ pytest tests/ -v
 
-   # Run linting
-   black sql_agent/
-   isort sql_agent/
-   flake8 sql_agent/
+ # Run linting
+ black sql_agent/
+ isort sql_agent/
+ flake8 sql_agent/
 
-   # Type checking
-   mypy sql_agent/
-   ```
+ # Type checking
+ mypy sql_agent/
+ ```
 
 6. **Commit and push**
-   ```bash
-   git add .
-   git commit -m "feat: add your feature description"
-   git push origin feature/your-feature-name
-   ```
+ ```bash
+ git add .
+ git commit -m "feat: add your feature description"
+ git push origin feature/your-feature-name
+ ```
 
 7. **Open a Pull Request**
-   - Use a descriptive title
-   - Reference related issues with "Fixes #123"
-   - Explain your changes and motivation
-   - Ensure tests pass in CI
+ - Use a descriptive title
+ - Reference related issues with "Fixes #123"
+ - Explain your changes and motivation
+ - Ensure tests pass in CI
 
 ## Commit Message Conventions
 
@@ -107,7 +107,7 @@ test: add tests for chart reasoner confidence scoring
 ```bash
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -e ".[dev]"
@@ -145,17 +145,17 @@ If you're adding new models or training approaches:
 1. Add your training script to `training/`
 2. Document the process in a markdown file (e.g., `TRAINING_CUSTOM_MODEL.md`)
 3. Include:
-   - Dataset sources and preparation
-   - Hyperparameters used
-   - Training time and resource requirements
-   - Evaluation metrics
-   - How to use the trained model
+ - Dataset sources and preparation
+ - Hyperparameters used
+ - Training time and resource requirements
+ - Evaluation metrics
+ - How to use the trained model
 
 4. Submit a PR with:
-   - Training script
-   - Documentation
-   - Link to model weights (HuggingFace Hub preferred)
-   - Evaluation results
+ - Training script
+ - Documentation
+ - Link to model weights (HuggingFace Hub preferred)
+ - Evaluation results
 
 ## Documentation
 
@@ -169,28 +169,28 @@ Good documentation is crucial! When adding features:
 ### Docstring Format
 ```python
 def function_name(param1: str, param2: int) -> dict:
-    """Short description of what the function does.
-    
-    Longer description explaining the purpose, behavior, and any
-    important notes about the function.
-    
-    Args:
-        param1: Description of param1
-        param2: Description of param2
-    
-    Returns:
-        Dictionary with keys:
-        - 'result': The computation result
-        - 'metadata': Additional information
-    
-    Raises:
-        ValueError: If param1 is empty
-        TypeError: If param2 is not an integer
-    
-    Example:
-        >>> result = function_name("input", 42)
-        >>> print(result['result'])
-    """
+ """Short description of what the function does.
+
+ Longer description explaining the purpose, behavior, and any
+ important notes about the function.
+
+ Args:
+ param1: Description of param1
+ param2: Description of param2
+
+ Returns:
+ Dictionary with keys:
+ - 'result': The computation result
+ - 'metadata': Additional information
+
+ Raises:
+ ValueError: If param1 is empty
+ TypeError: If param2 is not an integer
+
+ Example:
+ >>> result = function_name("input", 42)
+ >>> print(result['result'])
+ """
 ```
 
 ## Testing Guidelines
@@ -207,15 +207,15 @@ import pytest
 from sql_agent.orchestrator import Orchestrator
 
 class TestOrchestrator:
-    @pytest.fixture
-    def orchestrator(self):
-        return Orchestrator(use_mock_models=True)
-    
-    def test_orchestrator_routes_question_correctly(self, orchestrator):
-        result = orchestrator.process_question("What are top products?")
-        assert 'sql' in result
-        assert 'chart' in result
-        assert 'svg' in result
+ @pytest.fixture
+ def orchestrator(self):
+ return Orchestrator(use_mock_models=True)
+
+ def test_orchestrator_routes_question_correctly(self, orchestrator):
+ result = orchestrator.process_question("What are top products?")
+ assert 'sql' in result
+ assert 'chart' in result
+ assert 'svg' in result
 ```
 
 ## Pull Request Process

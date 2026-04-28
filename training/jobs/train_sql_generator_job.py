@@ -70,7 +70,7 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--sample", type=int, default=None,
                    help="Subsample N rows from train (default: use all)")
-    p.add_argument("--max-seq-len", type=int, default=2048)
+    p.add_argument("--max-seq-len", type=int, default=1024)
     p.add_argument("--batch-size", type=int, default=None,
                    help="Per-device batch size (auto-detected if omitted)")
     p.add_argument("--grad-accum", type=int, default=None,
@@ -82,6 +82,8 @@ def parse_args():
     p.add_argument("--save-steps", type=int, default=500)
     p.add_argument("--output-repo", default=OUTPUT_REPO)
     p.add_argument("--no-push", action="store_true")
+    p.add_argument("--resume", action="store_true",
+                   help="Resume training from latest Hub checkpoint")
     return p.parse_args()
 
 
@@ -94,7 +96,7 @@ def detect_gpu():
         sys.exit(1)
 
     name = torch.cuda.get_device_name(0)
-    vram_gb = torch.cuda.get_device_properties(0).total_mem / 1e9
+    vram_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
     log.info(f"GPU: {name} ({vram_gb:.1f} GB VRAM)")
     log.info(f"CUDA version: {torch.version.cuda}")
     log.info(f"PyTorch version: {torch.__version__}")
@@ -170,7 +172,7 @@ def main():
         lora_alpha=args.lora_alpha,
         lora_dropout=0,
         bias="none",
-        use_gradient_checkpointing="unsloth",
+        use_gradient_checkpointing=False,
         random_state=42,
     )
 
@@ -242,8 +244,12 @@ def main():
         report_to="none",
         dataset_text_field="text",
         max_seq_length=args.max_seq_len,
-        packing=False,
+        packing=True,
         eval_strategy="no",
+        push_to_hub=True,
+        hub_model_id=args.output_repo,
+        hub_strategy="every_save",
+        hub_private_repo=False,
     )
 
     trainer = SFTTrainer(
@@ -253,9 +259,9 @@ def main():
         args=training_args,
     )
 
-    log.info("Starting training...")
+    log.info(f"Starting training... (resume={args.resume})")
     try:
-        stats = trainer.train()
+        stats = trainer.train(resume_from_checkpoint=args.resume)
         log.info(f"Training complete: {stats}")
     except RuntimeError as e:
         if "out of memory" in str(e).lower():

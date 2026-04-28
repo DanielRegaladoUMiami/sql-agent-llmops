@@ -1,4 +1,4 @@
-# 📓 Training Notebooks
+# Training Notebooks
 
 One Colab notebook per specialist model. Each one:
 
@@ -13,12 +13,12 @@ One Colab notebook per specialist model. Each one:
 | Notebook | Base model | Dataset | Hardware |
 |----------|------------|---------|----------|
 | [`train_sql_generator.ipynb`](train_sql_generator.ipynb) | Qwen 2.5 Coder 7B | [`DanielRegaladoCardoso/text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) | Colab Pro A100 (T4 for subsample) |
-| [`train_chart_reasoner.ipynb`](train_chart_reasoner.ipynb) | Phi-3 Mini 3.8B | [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) | Colab T4 free ✅ |
-| [`train_svg_renderer.ipynb`](train_svg_renderer.ipynb) | DeepSeek Coder 1.3B | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) | Colab T4 free ✅ |
+| [`train_chart_reasoner.ipynb`](train_chart_reasoner.ipynb) | Phi-3 Mini 3.8B | [`DanielRegaladoCardoso/chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) | Colab T4 free |
+| [`train_svg_renderer.ipynb`](train_svg_renderer.ipynb) | DeepSeek Coder 1.3B | [`DanielRegaladoCardoso/svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) | Colab T4 free |
 
 ## Open in Colab
 
-Click any notebook on GitHub and hit the **"Open in Colab"** badge, or use a URL like:
+Click any notebook on GitHub and hit the **"Open in Colab"**badge, or use a URL like:
 
 ```
 https://colab.research.google.com/github/DanielRegaladoUMiami/sql-agent-llmops/blob/main/training/notebooks/train_svg_renderer.ipynb
@@ -38,6 +38,6 @@ These get wired into the production SQL Agent in [`sql_agent/`](../../sql_agent/
 
 - Always run cell 1 (`nvidia-smi`) first to confirm you got a GPU.
 - T4 free tier has a time limit (~12 h). If you time out, the trainer checkpoints
-  every 500–1000 steps — reload from `output_dir/checkpoint-*` and resume.
+ every 500–1000 steps — reload from `output_dir/checkpoint-*` and resume.
 - For the SQL Generator on free tier, set `SAMPLE_N = 100_000` in cell 7 or you
-  won't finish the epoch before the session expires.
+ won't finish the epoch before the session expires.
