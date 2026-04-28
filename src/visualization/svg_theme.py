@@ -43,11 +43,31 @@ def apply_theme(svg: str) -> str:
     if not svg or "<svg" not in svg:
         return svg
 
+    svg = _strip_plotly_chrome(svg)
     svg = _ensure_viewbox(svg)
     svg = _ensure_responsive(svg)
     svg = _normalize_fonts(svg)
     svg = _normalize_strokes(svg)
     svg = _wrap_with_theme(svg)
+    return svg
+
+
+def _strip_plotly_chrome(svg: str) -> str:
+    """Remove Plotly's modebar, watermark and toolbar artifacts."""
+    # Plotly draws a modebar group — strip it
+    svg = re.sub(
+        r'<g[^>]*class="[^"]*modebar[^"]*"[^>]*>.*?</g>',
+        "",
+        svg,
+        flags=re.DOTALL,
+    )
+    # Remove explicit white backgrounds that Plotly adds
+    svg = re.sub(
+        r'fill="(?:rgb\(255,\s*255,\s*255\)|#fff(?:fff)?|white)"',
+        'fill="transparent"',
+        svg,
+        flags=re.IGNORECASE,
+    )
     return svg
 
 

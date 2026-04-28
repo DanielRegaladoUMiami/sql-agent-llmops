@@ -396,6 +396,72 @@ details > *:not(summary) { padding: 0 14px 14px; }
 
 /* Hide labels Gradio adds */
 .gr-form > label, label.svelte-1gfkn6j, .label-wrap { display: none !important; }
+
+/* Download links below chart */
+.downloads {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 4px;
+  flex-wrap: wrap;
+}
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 6px 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius-sm);
+  color: var(--ink-muted);
+  text-decoration: none;
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+.download-link:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+  background: var(--accent-soft);
+}
+.download-link .icon {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Schema preview after upload */
+.schema-preview {
+  margin: 14px 0;
+  padding: 14px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius-sm);
+}
+.schema-preview-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+.schema-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.schema-col {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--surface);
+  border: 1px solid var(--ink-faint);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.schema-col-name { color: var(--ink); font-family: var(--font-mono); font-size: 12px; }
+.schema-col-type { color: var(--ink-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
 """
 
 
@@ -451,6 +517,63 @@ def _file_chip_html(filename: str, rows: int, cols: int) -> str:
     )
 
 
+def _schema_preview_html(table: str, schema: list[dict]) -> str:
+    """Render the column names + types of the loaded table."""
+    if not schema:
+        return ""
+    cols = "".join(
+        f'<span class="schema-col">'
+        f'<span class="schema-col-name">{c["name"]}</span>'
+        f'<span class="schema-col-type">{c["type"]}</span>'
+        f'</span>'
+        for c in schema
+    )
+    return (
+        '<div class="schema-preview">'
+        f'<div class="schema-preview-header">{table} · {len(schema)} columns</div>'
+        f'<div class="schema-cols">{cols}</div>'
+        '</div>'
+    )
+
+
+def _download_links_html(sql: str, results: list[dict], svg: str) -> str:
+    """Inline data-URL download links for CSV (results) and SVG (chart)."""
+    import base64
+    import csv
+    import io as _io
+
+    parts = []
+
+    # CSV download
+    if results:
+        buf = _io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=list(results[0].keys()))
+        writer.writeheader()
+        for r in results:
+            writer.writerow({k: ("" if v is None else v) for k, v in r.items()})
+        csv_b64 = base64.b64encode(buf.getvalue().encode("utf-8")).decode("ascii")
+        parts.append(
+            f'<a class="download-link" '
+            f'href="data:text/csv;base64,{csv_b64}" '
+            f'download="query-result.csv">'
+            f'<span class="icon">↓</span> CSV ({len(results):,} rows)</a>'
+        )
+
+    # SVG download
+    if svg and "<svg" in svg.lower():
+        svg_b64 = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+        parts.append(
+            f'<a class="download-link" '
+            f'href="data:image/svg+xml;base64,{svg_b64}" '
+            f'download="chart.svg">'
+            f'<span class="icon">↓</span> SVG</a>'
+        )
+
+    if not parts:
+        return ""
+    return f'<div class="downloads">{"".join(parts)}</div>'
+
+
 def _suggestions_html(qs: list[str]) -> str:
     if not qs:
         return ""
@@ -500,6 +623,13 @@ def _turn_html_complete(result: dict) -> str:
     if result.get("svg"):
         parts.append(f'<div class="chart-wrap">{result["svg"]}</div>')
 
+    # Inline download links for CSV + SVG
+    parts.append(_download_links_html(
+        result.get("sql") or "",
+        result.get("results") or [],
+        result.get("svg") or "",
+    ))
+
     if result.get("sql"):
         parts.append(
             '<details><summary>SQL query</summary>'
@@ -544,13 +674,23 @@ def _empty_state_html() -> str:
 
 
 def _ready_state_html() -> str:
-    """Shown when data is loaded but no queries asked yet."""
+    """Shown when data is loaded but no queries asked yet. Shows schema preview."""
+    agent = get_agent()
+    tables = agent.list_tables()
+    if not tables:
+        return _empty_state_html()
+
+    table = tables[0]
+    schema = agent.executor.get_table_schema(table)
+    schema_html = _schema_preview_html(table, schema)
+
     return (
         '<div class="empty">'
         '<div class="empty-title">Ready</div>'
         '<div class="empty-sub">Ask a question above, or try one of these:</div>'
         f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
         '</div>'
+        f'{schema_html}'
     )
 
 
