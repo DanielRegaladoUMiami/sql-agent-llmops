@@ -728,14 +728,8 @@ def on_load_demo():
 
 
 @spaces.GPU(duration=60)
-def _gpu_process(question: str, oauth_token=None) -> dict:
-    """Inference only — models already on cuda from module-level loading.
-
-    The oauth_token parameter is auto-injected by Gradio when the user is
-    logged in via gr.LoginButton; spaces.GPU uses it to attribute the GPU
-    call to the authenticated user (so they get their Pro quota instead of
-    being treated as anonymous).
-    """
+def _gpu_process(question: str) -> dict:
+    """Inference only — models already on cuda from module-level loading."""
     agent = get_agent()
     return agent.process(question)
 
@@ -798,11 +792,6 @@ def build_app() -> gr.Blocks:
             '</div>'
             '</div>'
         )
-        # ZeroGPU requires authenticated identity for proper quota.
-        # Iframes don't always pass HF cookies, so we surface an explicit
-        # OAuth button. After login the user gets 25min/day Pro quota.
-        with gr.Row():
-            gr.LoginButton(value="Sign in with Hugging Face", size="sm")
 
         # Upload
         with gr.Row(elem_classes=["upload-row"]):
