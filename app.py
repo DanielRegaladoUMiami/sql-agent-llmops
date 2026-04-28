@@ -100,22 +100,17 @@ footer { display: none !important; }
 .app-title { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
 .app-subtitle { font-size: 13px; color: var(--ink-muted); }
 
-.quota-banner {
-  font-size: 12px;
-  color: var(--ink-muted);
-  background: var(--accent-soft);
-  border: 1px solid var(--ink-faint);
-  border-radius: var(--radius-sm);
-  padding: 9px 14px;
-  margin: -16px 0 22px;
-  line-height: 1.5;
+/* HF Login button — make it Apple-style */
+[data-testid="login-button"], .login-button, button[aria-label*="login"], button[aria-label*="Login"] {
+  background: var(--ink) !important;
+  color: var(--surface) !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  margin-bottom: 18px !important;
 }
-.quota-banner a {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-}
-.quota-banner a:hover { text-decoration: underline; }
 
 /* File upload — compact, Apple-style */
 .upload-row { margin-bottom: 18px; }
@@ -643,12 +638,9 @@ def build_app() -> gr.Blocks:
             '<div class="app-subtitle">Ask anything about your data.</div>'
             '</div>'
             '</div>'
-            '<div class="quota-banner">'
-            'Running on HF ZeroGPU. '
-            '<a href="https://huggingface.co/login" target="_blank" rel="noopener">Sign in to Hugging Face</a> '
-            'for the full daily GPU quota (anonymous users hit limits fast).'
-            '</div>'
         )
+        # Hugging Face login button — required for ZeroGPU quota
+        gr.LoginButton(value="Sign in with Hugging Face", size="sm")
 
         # Upload
         with gr.Row(elem_classes=["upload-row"]):
