@@ -477,28 +477,34 @@ def build_app() -> gr.Blocks:
         history_state = gr.State([])
         conversation = gr.HTML(_conversation_html([]))
 
-        # Wire events
+        # Wire events. api_name=False on each event skips JSON-schema api
+        # introspection which crashes on Dict[str, Any] returns in gradio<5.
         upload.upload(
             fn=on_upload,
             inputs=upload,
             outputs=[chip_html, upload_status],
+            api_name=False,
         )
         ask_btn.click(
             fn=on_ask,
             inputs=[question, history_state],
             outputs=[conversation, question, history_state],
+            api_name=False,
         )
         question.submit(
             fn=on_ask,
             inputs=[question, history_state],
             outputs=[conversation, question, history_state],
+            api_name=False,
         )
         reset_btn.click(
             fn=on_reset,
             outputs=[chip_html, question, history_state],
+            api_name=False,
         ).then(
             fn=lambda: _conversation_html([]),
             outputs=conversation,
+            api_name=False,
         )
 
     return demo
@@ -506,7 +512,7 @@ def build_app() -> gr.Blocks:
 
 if __name__ == "__main__":
     app = build_app()
-    app.launch(
+    app.queue(api_open=False).launch(
         server_name="0.0.0.0",
         server_port=int(os.environ.get("PORT", 7860)),
         show_api=False,
