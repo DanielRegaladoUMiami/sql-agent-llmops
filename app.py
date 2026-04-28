@@ -730,8 +730,14 @@ def on_load_demo() -> Tuple[str, str, list]:
 
 
 @spaces.GPU(duration=60)
-def _gpu_process(question: str) -> dict:
-    """Inference only — models already on cuda from module-level loading."""
+def _gpu_process(question: str, oauth_token=None) -> dict:
+    """Inference only — models already on cuda from module-level loading.
+
+    The oauth_token parameter is auto-injected by Gradio when the user is
+    logged in via gr.LoginButton; spaces.GPU uses it to attribute the GPU
+    call to the authenticated user (so they get their Pro quota instead of
+    being treated as anonymous).
+    """
     agent = get_agent()
     return agent.process(question)
 
@@ -768,9 +774,11 @@ def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], Non
     yield _conversation_html(history), "", history
 
 
-def on_reset() -> Tuple[str, str, str, list]:
+def on_reset():
+    """Clear everything: uploaded file, chip, question, conversation, agent state."""
     get_agent().reset()
-    return "", "", _conversation_html([]), []
+    # Order: upload, chip_html, question, conversation, history_state
+    return None, "", "", _conversation_html([]), []
 
 
 # ====================================================================== APP
@@ -859,7 +867,7 @@ def build_app() -> gr.Blocks:
         )
         reset_btn.click(
             fn=on_reset,
-            outputs=[chip_html, question, conversation, history_state],
+            outputs=[upload, chip_html, question, conversation, history_state],
             api_name=False,
         )
 
