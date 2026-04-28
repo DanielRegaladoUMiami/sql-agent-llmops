@@ -5,7 +5,6 @@ Apple x Claude minimalist design with progressive feedback during the
 multi-step pipeline.
 """
 
-import io
 import logging
 import os
 import sys
@@ -16,6 +15,31 @@ import pandas as pd
 
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logger = logging.getLogger(__name__)
+
+# CRITICAL: pre-download model weights at module-load time (CPU phase, no GPU
+# needed). When @spaces.GPU is later invoked, from_pretrained() finds the
+# files already cached and just moves them to GPU — that loads in ~10s
+# instead of 30-60s, which keeps us inside the ZeroGPU quota window.
+MODEL_REPOS = [
+    "DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora",
+    "DanielRegaladoCardoso/chart-reasoner-phi3-mini-lora",
+    "DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora",
+]
+
+try:
+    from huggingface_hub import snapshot_download
+    for repo in MODEL_REPOS:
+        try:
+            logger.info(f"Pre-downloading {repo}...")
+            snapshot_download(repo)
+            logger.info(f"  cached")
+        except Exception as e:
+            logger.warning(f"  pre-download failed (will retry on first use): {e}")
+except Exception as e:
+    logger.warning(f"snapshot_download unavailable: {e}")
 
 import gradio as gr  # noqa: E402
 
@@ -35,9 +59,6 @@ except ImportError:
             return decorator
 
     spaces = _SpacesShim()  # type: ignore
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
 
 
 # ============================================================ THEME / CSS
@@ -639,8 +660,6 @@ def build_app() -> gr.Blocks:
             '</div>'
             '</div>'
         )
-        # Hugging Face login button — required for ZeroGPU quota
-        gr.LoginButton(value="Sign in with Hugging Face", size="sm")
 
         # Upload
         with gr.Row(elem_classes=["upload-row"]):
