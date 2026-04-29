@@ -108,8 +108,8 @@ footer { display: none !important; }
   justify-content: space-between;
   gap: 16px;
 }
-.app-title { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; }
-.app-subtitle { font-size: 13px; color: var(--ink-muted); }
+.app-title { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; color: var(--ink) !important; }
+.app-subtitle { font-size: 13px; color: var(--ink-muted) !important; }
 
 /* HF Login button — make it Apple-style */
 [data-testid="login-button"], .login-button, button[aria-label*="login"], button[aria-label*="Login"] {
@@ -149,13 +149,21 @@ footer { display: none !important; }
   border: 1px solid var(--ink-faint);
   border-radius: 999px;
   font-size: 13px;
-  color: var(--ink);
+  color: var(--ink) !important;
 }
-.file-chip-meta { color: var(--ink-muted); font-size: 12px; }
+.file-chip span { color: var(--ink) !important; }
+.file-chip-meta { color: var(--ink-muted) !important; font-size: 12px; }
 .file-chip-dot {
   width: 6px; height: 6px;
   background: var(--accent);
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Hide the giant gr.File "uploaded file" display — we have our own chip */
+.upload-row [data-testid="file"] .file-preview,
+.upload-row .file-preview-holder {
+  display: none !important;
 }
 
 /* Question input */
@@ -178,7 +186,21 @@ textarea:focus, [data-testid="textbox"] textarea:focus {
   box-shadow: 0 0 0 3px var(--accent-soft) !important;
 }
 textarea::placeholder { color: var(--ink-muted) !important; }
-.kb-hint { font-size: 11px; color: var(--ink-muted); margin: 4px 4px 0; }
+.kb-hint {
+  font-size: 11px;
+  color: var(--ink-muted) !important;
+  margin: 4px 4px 0;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Question group container — make sure it's not boxed/dark */
+.question-row, .question-row > div, .question-row .gr-block, .question-row .gr-form {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 
 /* Buttons */
 button.primary, button[variant="primary"], .gr-button.primary {
