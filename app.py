@@ -162,9 +162,15 @@ footer { display: none !important; }
   transition: all 200ms ease !important;
   min-height: 90px !important;
 }
-.upload-row [data-testid="file"]:hover {
+.upload-row [data-testid="file"]:hover,
+.upload-row [data-testid="file"].drag-over,
+.upload-row [data-testid="file"][data-drag-over="true"] {
   border-color: var(--accent) !important;
   background: var(--accent-soft) !important;
+  transform: scale(1.005);
+}
+.upload-row [data-testid="file"] {
+  cursor: pointer !important;
 }
 .upload-row [data-testid="file"] *,
 .upload-row .upload-text,
@@ -404,13 +410,31 @@ button.secondary, button[variant="secondary"] {
   background: var(--surface-raised);
   border: 1px solid var(--ink-faint);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 28px;
   margin: 8px 0 14px;
   box-shadow: var(--shadow-sm);
+  transition: box-shadow 250ms ease, transform 250ms ease;
+  position: relative;
 }
+.chart-wrap:hover { box-shadow: var(--shadow-md); }
 .chart-wrap svg { width: 100% !important; height: auto !important; display: block; }
+.chart-badge {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: var(--surface);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--ink-faint);
+}
 
-/* Code blocks */
+/* Code blocks with syntax highlighting + copy button */
+.sql-wrap { position: relative; margin: 6px 0 0; }
 .sql-block {
   background: var(--surface-raised);
   border: 1px solid var(--ink-faint);
@@ -421,9 +445,31 @@ button.secondary, button[variant="secondary"] {
   padding: 14px 16px;
   overflow-x: auto;
   white-space: pre-wrap;
-  margin: 6px 0 0;
-  line-height: 1.6;
+  margin: 0;
+  line-height: 1.65;
 }
+.sql-kw { color: var(--accent); font-weight: 600; }
+.sql-fn { color: var(--ink); font-weight: 500; }
+.sql-str { color: #6b7d4f; }
+.sql-num { color: #7d6b4f; }
+.sql-cmt { color: var(--ink-muted); font-style: italic; }
+.sql-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 11px;
+  padding: 4px 9px;
+  background: var(--surface);
+  border: 1px solid var(--ink-faint);
+  border-radius: 6px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: var(--font);
+  user-select: none;
+}
+.sql-copy:hover { color: var(--ink); border-color: var(--accent); }
+.sql-copy:active { background: var(--accent-soft); }
 
 /* Details / collapsibles */
 details {
@@ -832,6 +878,83 @@ def _turn_html_progress(question: str, current_stage: str = "sql") -> str:
     )
 
 
+SQL_KEYWORDS = {
+    "SELECT", "FROM", "WHERE", "GROUP", "BY", "ORDER", "HAVING", "LIMIT",
+    "OFFSET", "JOIN", "LEFT", "RIGHT", "INNER", "OUTER", "FULL", "ON",
+    "AS", "AND", "OR", "NOT", "IN", "BETWEEN", "LIKE", "IS", "NULL",
+    "DISTINCT", "WITH", "UNION", "ALL", "CASE", "WHEN", "THEN", "ELSE",
+    "END", "ASC", "DESC", "INSERT", "INTO", "VALUES", "UPDATE", "SET",
+    "DELETE", "CREATE", "TABLE", "DROP", "ALTER",
+}
+SQL_FUNCTIONS = {
+    "COUNT", "SUM", "AVG", "MIN", "MAX", "DATE", "EXTRACT", "CAST",
+    "COALESCE", "ROUND", "ABS", "LENGTH", "LOWER", "UPPER", "SUBSTR",
+    "TRIM", "REPLACE", "CONCAT", "STRFTIME", "DATEDIFF", "NOW",
+}
+
+def _highlight_sql(sql: str) -> str:
+    """Tokenize and add span highlighting to a SQL query."""
+    import re as _re, html as _html
+    out = []
+    i = 0
+    n = len(sql)
+    while i < n:
+        c = sql[i]
+        # Comments: -- to end of line
+        if c == "-" and i + 1 < n and sql[i + 1] == "-":
+            j = sql.find("\n", i)
+            if j == -1: j = n
+            out.append(f'<span class="sql-cmt">{_html.escape(sql[i:j])}</span>')
+            i = j
+        # Strings
+        elif c in ("'", '"'):
+            quote = c
+            j = i + 1
+            while j < n and sql[j] != quote:
+                if sql[j] == "\\" and j + 1 < n:
+                    j += 2
+                else:
+                    j += 1
+            j = min(j + 1, n)
+            out.append(f'<span class="sql-str">{_html.escape(sql[i:j])}</span>')
+            i = j
+        # Numbers
+        elif c.isdigit():
+            j = i
+            while j < n and (sql[j].isdigit() or sql[j] == "."):
+                j += 1
+            out.append(f'<span class="sql-num">{sql[i:j]}</span>')
+            i = j
+        # Identifiers / keywords / functions
+        elif c.isalpha() or c == "_":
+            j = i
+            while j < n and (sql[j].isalnum() or sql[j] == "_"):
+                j += 1
+            word = sql[i:j]
+            upper = word.upper()
+            if upper in SQL_KEYWORDS:
+                out.append(f'<span class="sql-kw">{word}</span>')
+            elif upper in SQL_FUNCTIONS:
+                out.append(f'<span class="sql-fn">{word}</span>')
+            else:
+                out.append(_html.escape(word))
+            i = j
+        else:
+            out.append(_html.escape(c))
+            i += 1
+    return "".join(out)
+
+
+def _chart_badge(spec: dict, results_count: int) -> str:
+    """Small uppercase badge showing chart type and row count."""
+    if not spec:
+        return ""
+    chart_type = (spec.get("chart_type") or "?").upper()
+    if results_count > 30:
+        return f'<div class="chart-badge">{chart_type} · top 30 of {results_count}</div>'
+    return f'<div class="chart-badge">{chart_type} · {results_count} rows</div>'
+
+
 def _turn_html_complete(result: dict) -> str:
     """Render a finished turn."""
     parts: list[str] = [f'<div class="turn-question">{result["question"]}</div>']
@@ -840,7 +963,10 @@ def _turn_html_complete(result: dict) -> str:
         parts.append(f'<div class="turn-error">{result["error"]}</div>')
 
     if result.get("svg"):
-        parts.append(f'<div class="chart-wrap">{result["svg"]}</div>')
+        badge = _chart_badge(result.get("chart_spec"), len(result.get("results") or []))
+        parts.append(
+            f'<div class="chart-wrap">{badge}{result["svg"]}</div>'
+        )
 
     # Narration: 1-2 sentence finding from the analyst persona
     if result.get("narration"):
@@ -854,9 +980,18 @@ def _turn_html_complete(result: dict) -> str:
     ))
 
     if result.get("sql"):
+        sql_safe = _highlight_sql(result["sql"])
+        sql_raw = result["sql"].replace("`", "\\`").replace("\\", "\\\\")
+        copy_js = (
+            f"navigator.clipboard.writeText(`{sql_raw}`);"
+            "this.textContent='Copied';setTimeout(()=>{this.textContent='Copy'},1200);"
+        )
         parts.append(
-            '<details><summary>SQL query</summary>'
-            f'<pre class="sql-block">{result["sql"]}</pre>'
+            '<details open><summary>SQL query</summary>'
+            '<div class="sql-wrap">'
+            f'<button class="sql-copy" onclick="{copy_js}">Copy</button>'
+            f'<pre class="sql-block">{sql_safe}</pre>'
+            '</div>'
             '</details>'
         )
 
@@ -936,10 +1071,25 @@ def _build_schema_html(table: str) -> str:
     return _schema_preview_html(table, schema)
 
 
+def _placeholder_for_table(table: str) -> str:
+    """Return a smart placeholder based on the loaded table's columns."""
+    try:
+        agent = get_agent()
+        if not agent.list_tables():
+            return "Ask anything about your data…"
+        schema = agent.executor.get_table_schema(table)
+        suggestions = _suggest_questions(table, schema)
+        if suggestions:
+            return f"Try: {suggestions[0]}"
+    except Exception:
+        pass
+    return "Ask anything about your data…"
+
+
 def on_upload(file):
-    """Returns: (chip, schema_html, conversation, history_state)."""
+    """Returns: (chip, schema_html, conversation, history, question_update)."""
     if file is None:
-        return "", "", _conversation_html([]), []
+        return "", "", _conversation_html([]), [], gr.update(placeholder="Ask anything about your data…")
     agent = get_agent()
     agent.reset()
     try:
@@ -949,14 +1099,15 @@ def on_upload(file):
         cols = len(agent.executor.get_table_schema(table))
         chip = _file_chip_html(path.name, rows, cols)
         schema = _build_schema_html(table)
-        return chip, schema, _conversation_html([]), []
+        placeholder = _placeholder_for_table(table)
+        return chip, schema, _conversation_html([]), [], gr.update(placeholder=placeholder)
     except Exception as e:
         logger.exception("upload failed")
-        return "", "", f'<div class="turn-error">Could not load file: {e}</div>', []
+        return "", "", f'<div class="turn-error">Could not load file: {e}</div>', [], gr.update()
 
 
 def on_load_demo():
-    """Returns: (chip, schema_html, conversation, history_state)."""
+    """Returns: (chip, schema_html, conversation, history, question_update)."""
     agent = get_agent()
     agent.reset()
     try:
@@ -966,10 +1117,11 @@ def on_load_demo():
         cols = len(agent.executor.get_table_schema(table))
         chip = _file_chip_html("titanic.csv (demo)", rows, cols)
         schema = _build_schema_html(table)
-        return chip, schema, _conversation_html([]), []
+        placeholder = _placeholder_for_table(table)
+        return chip, schema, _conversation_html([]), [], gr.update(placeholder=placeholder)
     except Exception as e:
         logger.exception("demo load failed")
-        return "", "", f'<div class="turn-error">Could not load demo: {e}</div>', []
+        return "", "", f'<div class="turn-error">Could not load demo: {e}</div>', [], gr.update()
 
 
 @spaces.GPU(duration=60)
@@ -1082,17 +1234,17 @@ def build_app() -> gr.Blocks:
         upload.upload(
             fn=on_upload,
             inputs=upload,
-            outputs=[chip_html, schema_html, conversation, history_state],
+            outputs=[chip_html, schema_html, conversation, history_state, question],
             api_name=False,
         )
         upload.clear(
-            fn=lambda: ("", "", _conversation_html([]), []),
-            outputs=[chip_html, schema_html, conversation, history_state],
+            fn=lambda: ("", "", _conversation_html([]), [], gr.update(placeholder="Ask anything about your data…")),
+            outputs=[chip_html, schema_html, conversation, history_state, question],
             api_name=False,
         )
         demo_btn.click(
             fn=on_load_demo,
-            outputs=[chip_html, schema_html, conversation, history_state],
+            outputs=[chip_html, schema_html, conversation, history_state, question],
             api_name=False,
         )
         ask_btn.click(
