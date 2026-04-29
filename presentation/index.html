@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQL Agent · MSBA Presentation</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/highlight/monokai.css">
+
+<style>
+:root {
+  --ink: #0E0E0E;
+  --ink-muted: #5A5A5A;
+  --ink-faint: #E5E5E5;
+  --surface: #FAFAF9;
+  --surface-raised: #FFFFFF;
+  --accent: #C96442;
+  --accent-soft: rgba(201, 100, 66, 0.08);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+          "Helvetica Neue", "Inter", Arial, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html, body, .reveal {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  font-size: 28px;
+}
+
+.reveal .slides { text-align: left; }
+.reveal .slides section {
+  padding: 0;
+  height: 100%;
+}
+.reveal .slide-content {
+  padding: 64px 80px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
+}
+.reveal .slide-content.center { justify-content: center; }
+
+/* Accent mark on each slide */
+.reveal .slide-content::before {
+  content: "";
+  position: absolute;
+  top: 36px;
+  left: 80px;
+  width: 28px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.reveal .no-mark .slide-content::before { display: none; }
+
+/* Section label (uppercase amber kicker) */
+.kicker {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 14px;
+}
+
+.reveal h1 {
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ink);
+  margin: 0 0 32px;
+  text-transform: none;
+}
+.reveal h2 {
+  font-size: 38px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 24px;
+  text-transform: none;
+  letter-spacing: -0.02em;
+}
+.reveal h3 {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 18px 0 8px;
+}
+.reveal p { font-size: 22px; line-height: 1.55; color: var(--ink); margin: 0 0 16px; }
+.reveal li { font-size: 22px; line-height: 1.55; color: var(--ink); }
+.reveal strong { font-weight: 600; color: var(--ink); }
+.reveal em { color: var(--ink-muted); font-style: normal; }
+
+/* Title slide */
+.title-slide {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+}
+.title-slide h1 {
+  font-size: 84px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  margin: 0 0 16px;
+}
+.title-slide .subtitle {
+  font-size: 26px;
+  color: var(--ink-muted);
+  font-weight: 400;
+  margin: 0 0 64px;
+}
+.title-slide .meta {
+  font-size: 16px;
+  color: var(--ink-muted);
+  border-top: 1px solid var(--ink-faint);
+  padding-top: 20px;
+  max-width: 480px;
+  line-height: 1.7;
+}
+.title-slide .meta strong { color: var(--ink); font-weight: 600; }
+
+/* Code */
+.reveal code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-raised);
+  color: var(--ink);
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid var(--ink-faint);
+}
+.reveal pre {
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: 12px;
+  padding: 18px 22px;
+  font-size: 17px;
+  line-height: 1.6;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  margin: 16px 0;
+  width: auto;
+}
+.reveal pre code {
+  font-size: 17px !important;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Tables — minimalist match to README */
+.reveal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 18px;
+  margin: 12px 0;
+}
+.reveal th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink);
+  padding: 10px 12px;
+  border-bottom: 1.5px solid var(--ink);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.reveal td {
+  padding: 10px 12px;
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--ink-faint);
+  vertical-align: top;
+}
+.reveal td strong { color: var(--ink); }
+.reveal a { color: var(--accent); text-decoration: none; }
+.reveal a:hover { text-decoration: underline; }
+
+/* Quotes — narrator style */
+.reveal blockquote {
+  border: none;
+  border-left: 2px solid var(--accent);
+  padding: 6px 0 6px 22px;
+  margin: 22px 0;
+  font-size: 24px;
+  color: var(--ink);
+  background: transparent;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: none;
+}
+
+/* Stats */
+.stat-value {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin: 0;
+}
+.stat-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  margin-top: 6px;
+}
+
+/* Layouts */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: start; }
+
+/* Cards */
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: 14px;
+  padding: 22px 24px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+/* Image placeholder + actual */
+.media {
+  border: 1px solid var(--ink-faint);
+  border-radius: 14px;
+  background: var(--surface-raised);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.media img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.media-placeholder {
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: 14px;
+  padding: 80px 20px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+  background: transparent;
+}
+
+/* Footer + page number */
+.reveal .footer {
+  position: absolute;
+  bottom: 24px;
+  left: 80px;
+  right: 80px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+.reveal .progress { color: var(--accent); }
+.reveal .controls { color: var(--accent); }
+
+/* Mermaid */
+.mermaid { background: transparent; text-align: center; }
+.mermaid svg { max-width: 100%; height: auto; }
+
+/* Smooth transitions feel */
+.reveal section { transition: opacity 250ms ease; }
+
+/* Print / PDF */
+@media print {
+  .reveal .footer { display: none; }
+}
+</style>
+</head>
+
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================= -->
+<!-- 01 · TITLE -->
+<!-- ============================================================= -->
+<section class="no-mark">
+  <div class="slide-content title-slide">
+    <h1>SQL Agent</h1>
+    <p class="subtitle">Multi-Model LLMOps for Text-to-SQL</p>
+    <div class="meta">
+      <strong>Team</strong><br>
+      Daniel Regalado Cardoso · [Teammate 2] · [Teammate 3]<br>
+      MSBA · University of Miami · 2026
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 02 · AGENDA -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Today</p>
+    <h1>Agenda</h1>
+    <table>
+      <tr><td><strong>01</strong></td><td><strong>Why</strong></td><td>The problem we set out to solve</td></tr>
+      <tr><td><strong>02</strong></td><td><strong>Data</strong></td><td>Sourcing 10 public datasets, treating, splitting</td></tr>
+      <tr><td><strong>03</strong></td><td><strong>Hub</strong></td><td>Publishing three datasets to Hugging Face</td></tr>
+      <tr><td><strong>04</strong></td><td><strong>Training</strong></td><td>Three QLoRA fine-tunes with Unsloth</td></tr>
+      <tr><td><strong>05</strong></td><td><strong>Architecture</strong></td><td>How the agent orchestrates them</td></tr>
+      <tr><td><strong>06</strong></td><td><strong>Demo</strong></td><td>Live, on Hugging Face Spaces</td></tr>
+    </table>
+    <div class="footer"><span>SQL Agent · MSBA UMiami</span><span>02</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 03 · WHY -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Why</p>
+    <h1>Most data is locked behind SQL</h1>
+    <div class="grid-2">
+      <div>
+        <p>A typical analyst opens a CSV, freezes on the question, and either:</p>
+        <ul>
+          <li>Asks the data team and waits 3 days</li>
+          <li>Or gives up and looks at the file blind</li>
+        </ul>
+        <blockquote>Writing SQL is friction. Asking a question is not.</blockquote>
+        <p>The bet: <strong>let the model write the SQL.</strong></p>
+      </div>
+      <div>
+        <p class="stat-value">1.8M</p>
+        <p class="stat-label">rows in a sample CSV</p>
+        <br>
+        <p class="stat-value">14</p>
+        <p class="stat-label">columns</p>
+        <br>
+        <p class="stat-value">~0</p>
+        <p class="stat-label">questions answered without SQL</p>
+      </div>
+    </div>
+    <div class="footer"><span>Why</span><span>03</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 04 · THESIS -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">The thesis</p>
+    <h1>One specialist per task — not one giant model</h1>
+    <div class="mermaid" style="margin:32px 0">
+flowchart LR
+  Q["Question in English"]
+  A["SQL specialist<br/>Qwen 2.5 Coder 7B"]
+  B["Chart specialist<br/>Phi-3 Mini 3.8B"]
+  C["SVG specialist<br/>DeepSeek 1.3B"]
+  R["Chart + insight"]
+  Q --> A --> B --> C --> R
+  classDef in fill:#FAFAF9,stroke:#5A5A5A,color:#0E0E0E
+  classDef model fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  classDef out fill:#C96442,stroke:#0E0E0E,color:#FFFFFF
+  class Q in
+  class A,B,C model
+  class R out
+    </div>
+    <p><strong>Three small, focused models</strong> beat one large generic model on narrow tasks — and run on a single GPU.</p>
+    <div class="footer"><span>The thesis</span><span>04</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 05 · DATA SOURCING -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Data · sourcing</p>
+    <h1>We didn't reinvent — we curated</h1>
+    <div class="grid-2">
+      <div>
+        <p>Ten public text-to-SQL datasets, merged into one canonical training set:</p>
+        <ul style="font-size:18px; line-height: 1.85">
+          <li><code>b-mc2/sql-create-context</code></li>
+          <li><code>gretelai/synthetic_text_to_sql</code></li>
+          <li><code>knowrohit07/know_sql</code></li>
+          <li><code>NumbersStation/NSText2SQL</code></li>
+          <li><code>Clinton/Text-to-sql-v1</code></li>
+          <li><code>motherduckdb/duckdb-text2sql-25k</code></li>
+          <li><code>bugdaryan/spider-natsql-wikisql</code></li>
+          <li><code>ChrisHayduk/Llama-2-SQL</code></li>
+          <li><code>kaxap/llama2-sql-instruct</code></li>
+          <li><code>PipableAI/spider-bird</code></li>
+        </ul>
+      </div>
+      <div class="mermaid">
+flowchart TD
+  S1["10 raw sources<br/>~1.2M rows"] --> U[Schema unification]
+  U --> D[Dedup]
+  D --> F["Sequence-length filter<br/>≤ 1024 tokens"]
+  F --> X["761,155 unique rows"]
+  X --> SP["Train · Val · Test<br/>723k · 19k · 19k"]
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  class X,SP accent
+      </div>
+    </div>
+    <div class="footer"><span>Data · sourcing</span><span>05</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 06 · DATA TREATMENT -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Data · treatment</p>
+    <h1>From 1.2 million raw rows to 723k usable examples</h1>
+    <div class="grid-4">
+      <div>
+        <p class="stat-value">1.2M</p>
+        <p class="stat-label">Raw rows downloaded</p>
+      </div>
+      <div>
+        <p class="stat-value">761k</p>
+        <p class="stat-label">After dedup + schema unification</p>
+      </div>
+      <div>
+        <p class="stat-value">93.1%</p>
+        <p class="stat-label">Survived 1024-token filter</p>
+      </div>
+      <div>
+        <p class="stat-value">723k</p>
+        <p class="stat-label">Final training set</p>
+      </div>
+    </div>
+    <br>
+    <blockquote>Most ML projects spend 80% of their time on data prep. This one was no different.</blockquote>
+    <p style="font-size:18px; color:var(--ink-muted)">The whole pipeline is reproducible end-to-end via UV scripts in <code>training/data_pipelines/</code>.</p>
+    <div class="footer"><span>Data · treatment</span><span>06</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 07 · THREE DATASETS -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Data · three datasets</p>
+    <h1>Three datasets, three specialists</h1>
+    <div class="grid-3" style="margin-top:16px">
+      <div class="card">
+        <div class="card-title">Dataset · 01</div>
+        <h3 style="margin:4px 0 8px">text-to-sql-mix-v2</h3>
+        <p class="stat-value" style="font-size:42px">761k</p>
+        <p style="font-size:15px; color:var(--ink-muted); margin-top:10px">NL → SQL pairs from 10 merged public sources</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Dataset · 02</div>
+        <h3 style="margin:4px 0 8px">chart-reasoning-mix-v1</h3>
+        <p class="stat-value" style="font-size:42px">75k</p>
+        <p style="font-size:15px; color:var(--ink-muted); margin-top:10px">nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Dataset · 03</div>
+        <h3 style="margin:4px 0 8px">svg-chart-render-v1</h3>
+        <p class="stat-value" style="font-size:42px">25k</p>
+        <p style="font-size:15px; color:var(--ink-muted); margin-top:10px">nvBench charts re-rendered with matplotlib SVG backend</p>
+      </div>
+    </div>
+    <br>
+    <p><strong>Three datasets, three roles, three models.</strong> Curated for purpose, not scraped at scale.</p>
+    <div class="footer"><span>Data · datasets</span><span>07</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 08 · HUB -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Hub</p>
+    <h1>Everything is open on Hugging Face</h1>
+    <table>
+      <thead>
+        <tr><th>Dataset</th><th>Rows</th><th>License</th><th>Hub</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>text-to-sql-mix-v2</strong></td><td>761,155</td><td>Apache-2.0</td><td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2" target="_blank">huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2</a></td></tr>
+        <tr><td><strong>chart-reasoning-mix-v1</strong></td><td>~75,000</td><td>CC-BY-4.0</td><td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1" target="_blank">huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1</a></td></tr>
+        <tr><td><strong>svg-chart-render-v1</strong></td><td>~25,000</td><td>Apache-2.0</td><td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1" target="_blank">huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1</a></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <blockquote>Open by default. Anyone can reproduce, fine-tune their own variants, or extend the mix.</blockquote>
+    <div class="footer"><span>Hub</span><span>08</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 09 · WHY UNSLOTH -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Training · why Unsloth</p>
+    <h1>Fine-tune a 7B model on a single GPU — without paying $1,000</h1>
+    <table style="margin-top:12px">
+      <thead>
+        <tr><th></th><th>Vanilla <code>transformers</code></th><th>Unsloth QLoRA</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>7B model on 48 GB GPU</td><td>won't fit</td><td><strong>fits in 4-bit</strong></td></tr>
+        <tr><td>Training speed</td><td>1× baseline</td><td><strong>2× faster</strong></td></tr>
+        <tr><td>Memory footprint</td><td>1× baseline</td><td><strong>40% less</strong></td></tr>
+        <tr><td>Output artifact</td><td>full 14 GB weights</td><td><strong>~160 MB adapter</strong></td></tr>
+      </tbody>
+    </table>
+    <br>
+    <p><strong>Result:</strong> what used to need a multi-GPU cluster runs on one L40S — and we ship a tiny <code>.safetensors</code> adapter, not a 14 GB blob.</p>
+    <div class="footer"><span>Why Unsloth</span><span>09</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 10 · TRAINING RUN -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Training · the run</p>
+    <h1>Training the SQL Generator</h1>
+    <div class="grid-2">
+      <div>
+        <table style="font-size:17px">
+          <tbody>
+            <tr><td>Base</td><td><strong>Qwen2.5-Coder-7B-Instruct</strong></td></tr>
+            <tr><td>Method</td><td>QLoRA r=16, α=32 (4-bit)</td></tr>
+            <tr><td>Examples</td><td>672,949</td></tr>
+            <tr><td>Sequences after packing</td><td><strong>154,462</strong></td></tr>
+            <tr><td>Hardware</td><td>1× NVIDIA L40S (48 GB)</td></tr>
+            <tr><td>Wall-clock</td><td><strong>13.5 hours</strong></td></tr>
+            <tr><td>Final loss</td><td><strong>0.2658</strong></td></tr>
+            <tr><td>Total cost</td><td><strong>~$24</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mermaid">
+xychart-beta
+  title "Training loss (1 epoch)"
+  x-axis "Step" [0, 2000, 4000, 6000, 9654]
+  y-axis "Loss" 0 --> 1
+  line [0.92, 0.41, 0.32, 0.28, 0.27]
+      </div>
+    </div>
+    <blockquote style="margin-top:24px">Smooth descent. No instabilities, no restarts.</blockquote>
+    <div class="footer"><span>Training · the run</span><span>10</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 11 · THE TRICK -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Training · the trick</p>
+    <h1>One config flag → 4× speedup</h1>
+    <div class="mermaid" style="margin:24px 0">
+flowchart LR
+  A["723,000 examples<br/>variable length<br/>~1.7 s/step"] --> B["TRL: packing=True"]
+  B --> C["154,462 sequences<br/>1024 tokens packed<br/>~5.0 s/step"]
+  D["21 hours"] -.->|same epoch, same loss| E["13.5 hours"]
+  A -.-> D
+  C -.-> E
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  class A,C node
+  class D,E accent
+    </div>
+    <blockquote>One line in <code>SFTConfig</code>: <code>packing=True</code>. Saved 7.5 hours and ~$14 of GPU time.</blockquote>
+    <div class="footer"><span>Training · the trick</span><span>11</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 12 · VALIDATION -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Training · validation</p>
+    <h1>Did it actually learn?</h1>
+    <pre><code class="language-sql">-- Question: List all players from Tampa, Florida.
+
+-- Generated:
+SELECT player FROM table_name_68
+WHERE hometown = 'Tampa, Florida';
+
+-- Gold:
+SELECT player FROM table_name_68
+WHERE hometown = "tampa, florida";</code></pre>
+    <blockquote>Same query, modulo case and quotes — both DuckDB-valid.</blockquote>
+    <p>Final loss <strong>0.2658</strong> at 9,654 steps · single epoch · no overfitting signal.</p>
+    <div class="footer"><span>Training · validation</span><span>12</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 13 · ADAPTERS -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Architecture · adapters</p>
+    <h1>What "fine-tuned" actually means — we ship the diff</h1>
+    <div class="mermaid" style="margin:16px 0">
+flowchart LR
+  B["Base model<br/>(public, frozen)<br/>~14 GB"]
+  L["Our LoRA adapter<br/>(trained, small)<br/>~160 MB"]
+  M["Specialist<br/>(merged at runtime)"]
+  B --> M
+  L --> M
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  class L accent
+  class M accent
+    </div>
+    <table>
+      <thead>
+        <tr><th>Adapter</th><th>Base</th><th>Adapter size</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><a href="https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora" target="_blank">sql-generator-qwen25-coder-7b-lora</a></td><td>Qwen 2.5 Coder 7B</td><td>161 MB</td></tr>
+        <tr><td><a href="https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only" target="_blank">chart-reasoner-phi3-mini-adapter-only</a></td><td>Phi-3 Mini 4k</td><td>38 MB</td></tr>
+        <tr><td><a href="https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora" target="_blank">svg-renderer-deepseek-coder-1.3b-lora</a></td><td>DeepSeek Coder 1.3B</td><td>22 MB</td></tr>
+      </tbody>
+    </table>
+    <div class="footer"><span>Architecture · adapters</span><span>13</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 14 · APP FLOW -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Architecture · how the app runs</p>
+    <h1>Per query: 4 LLM calls, 5–8 seconds end-to-end</h1>
+    <div class="mermaid" style="margin:8px 0">
+flowchart LR
+  subgraph IN["User input"]
+    U1["CSV / JSON / Parquet"]
+    U2["NL question"]
+  end
+  SX["Schema extractor"] --> DB[("DuckDB<br/>in-memory")]
+  U1 --> SX
+  ORCH{{"Orchestrator"}}
+  U2 --> ORCH
+  DB --> ORCH
+  ORCH --> M1["SQL Generator<br/>Qwen + LoRA"]
+  M1 -->|SQL| DB
+  DB -->|results| M2["Chart Reasoner<br/>Phi-3 + LoRA"]
+  M2 -->|chart spec| M3["SVG Renderer<br/>DeepSeek + LoRA"]
+  M3 --> OUT["Chart + narration<br/>+ downloads"]
+  classDef in fill:#FAFAF9,stroke:#5A5A5A,color:#0E0E0E
+  classDef model fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  classDef orch fill:#0E0E0E,stroke:#0E0E0E,color:#FFFFFF
+  classDef out fill:#C96442,stroke:#0E0E0E,color:#FFFFFF
+  classDef db fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
+  class U1,U2 in
+  class M1,M2,M3 model
+  class ORCH orch
+  class OUT out
+  class DB db
+    </div>
+    <p>All three adapters loaded <strong>once at module level</strong> into a half-H200 via ZeroGPU.</p>
+    <div class="footer"><span>App flow</span><span>14</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 15 · APP SCREENSHOT -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">The app</p>
+    <h1>Apple × Claude minimalist UI, two-column layout</h1>
+    <div class="media">
+      <div class="media-placeholder">
+        Drop a screenshot of the live app here →<br>
+        <code>presentation/images/app-overview.png</code>
+      </div>
+    </div>
+    <p style="font-size:16px; color:var(--ink-muted); margin-top:12px"><strong>Left panel:</strong> dataset upload, schema preview, question input.<br><strong>Right panel:</strong> chart, analyst narration, downloadable CSV/SVG, syntax-highlighted SQL.</p>
+    <div class="footer"><span>The app</span><span>15</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 16 · ENGINEERING NOTES -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Engineering · what we learned</p>
+    <h1>Four non-obvious lessons</h1>
+    <div class="grid-2">
+      <blockquote><strong>ZeroGPU pattern.</strong> Load models on <code>cuda</code> at module level, not lazily inside <code>@spaces.GPU</code>. Lazy loading was burning 30–60 s of quota per query.</blockquote>
+      <blockquote><strong>PEFT explicit.</strong> Apply LoRA via <code>PeftModel.from_pretrained(base, adapter)</code>. Auto-detect triggered a base/adapter rank mismatch.</blockquote>
+      <blockquote><strong>DuckDB &gt; SQLite.</strong> Native CSV/JSON/Parquet ingestion, ANSI SQL, 10× faster on analytics workloads.</blockquote>
+      <blockquote><strong>Self-correction loop.</strong> If SQL fails, retry up to 3× with the error fed back to the model. Took accuracy from ~80% to ~95% — free.</blockquote>
+    </div>
+    <div class="footer"><span>Engineering</span><span>16</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 17 · COST -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Cost summary</p>
+    <h1>What it actually cost to build</h1>
+    <div class="grid-2">
+      <div>
+        <table style="font-size:17px">
+          <thead>
+            <tr><th>Stage</th><th>Compute</th><th>Cost</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>SQL Generator training</td><td>HF Jobs L40S, 13.5 h</td><td><strong>~$24</strong></td></tr>
+            <tr><td>Chart Reasoner training</td><td>Colab / HF Jobs</td><td>~$3</td></tr>
+            <tr><td>SVG Renderer training</td><td>Colab / HF Jobs</td><td>~$1</td></tr>
+            <tr><td>Chart dataset distillation</td><td>gpt-4.1-nano Batch</td><td>~$2.50</td></tr>
+            <tr><td>Inference hosting</td><td>HF Spaces ZeroGPU</td><td><strong>$0</strong></td></tr>
+            <tr><td><strong>Total</strong></td><td></td><td><strong>~$30</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; flex-direction:column; justify-content:center">
+        <p class="stat-value" style="font-size:120px">$30</p>
+        <p class="stat-label" style="font-size:15px">All-in to train three production fine-tunes</p>
+        <br>
+        <blockquote>Less than dinner.<br>Less than one OpenAI eval.<br>Open weights, reproducible.</blockquote>
+      </div>
+    </div>
+    <div class="footer"><span>Cost</span><span>17</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 18 · DEMO -->
+<!-- ============================================================= -->
+<section class="no-mark">
+  <div class="slide-content center" style="text-align:center; align-items:center">
+    <p class="kicker" style="text-align:center">Demo</p>
+    <h1 style="font-size:72px; text-align:center">Live</h1>
+    <p style="font-size:24px; margin-top:24px"><a href="https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent" target="_blank" style="font-size:24px"><strong>huggingface.co/spaces/DanielRegaladoCardoso/sql-agent</strong></a></p>
+    <br>
+    <p style="font-size:18px; color:var(--ink-muted); max-width:760px; margin: 16px auto 0; text-align:center">
+      Drop a CSV → ask a question → get SQL, a chart, an analyst-style finding, and download buttons.<br>
+      All powered by three fine-tuned LoRAs running on a half-H200.
+    </p>
+    <div class="footer"><span>Demo</span><span>18</span></div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- 19 · CLOSING -->
+<!-- ============================================================= -->
+<section>
+  <div class="slide-content">
+    <p class="kicker">Closing</p>
+    <h1>Three fine-tunes. Thirty dollars. Thirteen and a half hours.</h1>
+    <div class="grid-2">
+      <div>
+        <h3>Open source</h3>
+        <ul style="font-size:18px">
+          <li>Repo · <a href="https://github.com/DanielRegaladoUMiami/sql-agent-llmops" target="_blank">github.com/DanielRegaladoUMiami/sql-agent-llmops</a></li>
+          <li>Space · <a href="https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent" target="_blank">hf.co/spaces/DanielRegaladoCardoso/sql-agent</a></li>
+          <li>3 LoRAs on Hugging Face Hub</li>
+          <li>3 datasets, fully reproducible</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Where it goes next</h3>
+        <ul style="font-size:18px">
+          <li>Multi-turn conversation memory</li>
+          <li>Eval harness on Spider / WikiSQL / BIRD</li>
+          <li>Anomaly detection at upload</li>
+          <li>Statistical summary at ingest</li>
+        </ul>
+      </div>
+    </div>
+    <br>
+    <p style="text-align:center; font-size:24px; color:var(--ink-muted); margin-top:48px">Thank you.</p>
+    <div class="footer"><span>Closing</span><span>19</span></div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.0.4/plugin/highlight/highlight.js"></script>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    fontFamily: '-apple-system, "SF Pro Text", Inter, sans-serif',
+    primaryColor: '#FFFFFF',
+    primaryTextColor: '#0E0E0E',
+    primaryBorderColor: '#C96442',
+    lineColor: '#5A5A5A',
+    secondaryColor: '#FAFAF9',
+    tertiaryColor: '#FFFFFF',
+    background: '#FAFAF9',
+  },
+  flowchart: { curve: 'basis', padding: 18 },
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  Reveal.initialize({
+    hash: true,
+    width: 1600,
+    height: 900,
+    margin: 0,
+    minScale: 0.2,
+    maxScale: 2.0,
+    controls: true,
+    progress: true,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    plugins: [RevealHighlight],
+  });
+});
+</script>
+
+</body>
+</html>

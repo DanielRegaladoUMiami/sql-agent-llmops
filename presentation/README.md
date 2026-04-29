@@ -1,53 +1,97 @@
 # SQL Agent — Class Presentation
 
-Slide deck written in **Marp Markdown** with an Apple × Deloitte aesthetic
-(off-white background, near-black ink, Deloitte signature green accent
-`#86BC25`, SF Pro typography, generous whitespace, Mermaid diagrams).
+Two formats included:
 
-- 17 slides
-- ~12 minutes
-- Storytelling-first: Title → Agenda → Why → Data → Hub → Training → Architecture → Demo
+- **`index.html`** ⭐ recommended — Reveal.js custom build with Apple/Claude aesthetic, Mermaid diagrams, syntax highlighting, clickable links, image support
+- **`slides.md`** — Marp Markdown source (alternative; can export to PPTX/PDF)
 
-## How to view / export
+Both share the same content (19 slides, ~12 minutes, English).
 
-### Option 1 — VS Code (easiest)
+---
 
-1. Install the **"Marp for VS Code"** extension
-2. Open `slides.md`
-3. Click the Marp icon top-right of the editor → preview
-4. Export → `Markdown: Export slide deck...` → choose PDF or PPTX
-
-### Option 2 — Marp CLI
+## Open the HTML deck
 
 ```bash
-npm install -g @marp-team/marp-cli
-
-# To PDF
-marp slides.md --pdf --allow-local-files
-
-# To PPTX (editable in PowerPoint / Keynote)
-marp slides.md --pptx --allow-local-files
-
-# To HTML (self-contained presentation page)
-marp slides.md --html --allow-local-files
+open presentation/index.html
 ```
 
-### Option 3 — Marp Web
+That's it — no build step needed. It loads Reveal.js, Mermaid, and the syntax highlighter from CDNs.
 
-Paste the contents of `slides.md` into https://web.marp.app/ and export.
+### Navigation
 
-## Tips for the live presentation
+| Key | Action |
+|---|---|
+| `→` / `space` | next slide |
+| `←` | previous slide |
+| `f` | fullscreen |
+| `s` | speaker notes view |
+| `o` | overview (zoom out) |
+| `esc` | exit fullscreen / overview |
 
-- **Slide 14 (live demo)** is the climax — rehearse 5× that the demo works
-- **Backup**: record a 60-second screen capture of the demo flow in case Wi-Fi or quota fails on the day
-- **Slide 1**: pause 3 seconds after appearing — let the question land
-- Speak in first person: *"I trained"*, *"I curated"*, *"I shipped"*
-- Engineering notes (slide 13) work best as **war stories**, not bullet points
-- Closing line (slide 17): say it with confidence — *"Three fine-tunes, thirty dollars, thirteen and a half hours."*
+### URL fragments
+
+The deck uses URL hashes — you can link directly to a slide:
+- `index.html#/0` → title
+- `index.html#/14` → app screenshot
+- `index.html#/17` → demo
+
+---
+
+## Adding screenshots / images
+
+The slide on **"The app"** (#15) has a placeholder. Drop screenshots into `presentation/images/` and update the relevant `<div class="media-placeholder">` to:
+
+```html
+<div class="media">
+  <img src="images/app-overview.png" alt="SQL Agent UI">
+</div>
+```
+
+Suggested screenshots to add:
+
+| File name | What it shows |
+|---|---|
+| `images/app-overview.png` | The full app: dataset on left, chart + narration on right |
+| `images/app-dark.png` | Dark mode of the same view |
+| `images/hf-space.png` | The HF Space landing page |
+| `images/hf-models.png` | The three model cards on Hugging Face |
+| `images/loss-curve.png` | (optional) replace the inline xychart with a real screenshot of training loss |
+
+---
+
+## Export to PDF or PowerPoint
+
+### From the HTML deck (Reveal.js)
+
+Reveal.js has built-in PDF export via the print stylesheet:
+
+1. Open `index.html` in Chrome
+2. Append `?print-pdf` to the URL: `index.html?print-pdf`
+3. Print → Save as PDF
+4. Set paper size to **Landscape A4** or **Letter**, margins to **None**
+
+### From the Marp deck
+
+```bash
+npx @marp-team/marp-cli@latest slides.md --pdf --allow-local-files
+npx @marp-team/marp-cli@latest slides.md --pptx --allow-local-files
+```
+
+---
+
+## Presentation tips for the team
+
+- **Slide 18 (live demo)** is the climax — rehearse the demo end-to-end at least 5×
+- **Backup**: record a 60-second screen capture of the demo in case Wi-Fi or quota fails
+- **Slide 1**: pause 3 seconds after revealing — let the title land
+- **Engineering notes (slide 16)**: tell each one as a quick war story, not a bullet point
+- **Closing (slide 19)**: deliver the line with confidence — *"Three fine-tunes. Thirty dollars. Thirteen and a half hours."*
+- **Speaking handoffs**: roughly 6 min per teammate if 2 people, 4 min if 3
 
 ## What to bring
 
-1. Laptop with the Space open + signed in to Hugging Face (test quota beforehand)
-2. Pre-recorded demo video as backup
-3. A small CSV ready (Coffee or Retail dataset, ~250 rows for fast demo)
-4. 3 questions you've rehearsed and know produce good charts
+1. Laptop with `presentation/index.html` open offline (CDNs are loaded — works without Wi-Fi after first load)
+2. Logged-in HF browser tab pointing at the Space (test quota beforehand!)
+3. Pre-recorded screen capture of the demo as backup
+4. A small CSV ready (Coffee or Retail dataset, ~250 rows for fast demo)
+5. 3 questions you've rehearsed and know produce good charts
