@@ -230,83 +230,92 @@ slide = prs.slides.add_slide(blank)
 set_bg(slide, SURFACE)
 add_accent_bar(slide)
 add_kicker(slide, "Phases 1, 2 and 3 — Data")
-add_title(slide, "From 10 public datasets to three task corpora")
+add_title(slide, "We curated three purpose-built datasets, one per model")
 
-# Top: three stat boxes for the data pipeline
-stats_top = [("1.2M", "Raw rows from 10 public sources"),
-             ("723k", "Final usable training rows"),
-             ("3", "Task-specific datasets built")]
-sw_in = Inches(3.85); gap = Inches(0.25)
-total = sw_in * 3 + gap * 2
-sx = (SLIDE_W - total) / 2
-for i, (val, label) in enumerate(stats_top):
-    x = sx + (sw_in + gap) * i
-    add_rect(slide, x, Inches(2.2), sw_in, Inches(1.2),
-             fill=SURFACE_RAISED, line=INK_FAINT, line_w=0.75)
-    add_text(slide, x, Inches(2.35), sw_in, Inches(0.6),
-             val, size=36, bold=True, color=INK, align=PP_ALIGN.CENTER)
-    add_text(slide, x, Inches(2.95), sw_in, Inches(0.4),
-             label, size=11, color=INK_MUTED, align=PP_ALIGN.CENTER)
+# Narrative paragraph — explains WHAT we did
+add_text(slide, Inches(0.83), Inches(2.0), Inches(11.67), Inches(0.5),
+         "Building a corpus from scratch was not feasible. Instead, we aggregated 10 public text-to-SQL datasets, unified their schemas, removed duplicates by question hashing, and filtered out examples longer than 1,024 tokens. From the same merged corpus we then derived two more datasets — one for chart reasoning, one for SVG rendering — to train each specialist on its own task.",
+         size=12, color=INK, line_spacing=1.5)
 
-# Pipeline below
-add_text(slide, Inches(0.83), Inches(3.65), Inches(11), Inches(0.3),
-         "PIPELINE — REPRODUCIBLE VIA UV SCRIPTS IN training/data_pipelines/",
-         size=10, bold=True, color=INK_MUTED)
-
-steps = [
-    ("Source", "10 public\ndatasets"),
-    ("Unify", "7-column\ncanonical"),
-    ("Dedup", "question\nhashing"),
-    ("Filter", "≤ 1024\ntokens"),
-    ("Split", "723k / 19k / 19k"),
-]
-sw = Inches(2.2); sg = Inches(0.18)
-total_p = sw * 5 + sg * 4
-spx = (SLIDE_W - total_p) / 2
-for i, (top, bot) in enumerate(steps):
-    x = spx + (sw + sg) * i
-    accent = (i == 4)
-    line_color = ACCENT if accent else INK_FAINT
-    line_w = 1.5 if accent else 0.75
-    add_rect(slide, x, Inches(4.0), sw, Inches(1.1),
-             fill=SURFACE_RAISED, line=line_color, line_w=line_w)
-    add_text(slide, x, Inches(4.18), sw, Inches(0.4), top,
-             size=12, bold=True, color=INK, align=PP_ALIGN.CENTER)
-    add_text(slide, x, Inches(4.55), sw, Inches(0.5), bot,
-             size=10, color=INK_MUTED, align=PP_ALIGN.CENTER)
-    if i < 4:
-        ax = x + sw + Inches(0.02)
-        add_line(slide, ax, Inches(4.55), ax + Inches(0.13), Inches(4.55),
-                 color=INK_MUTED, weight=0.75)
-
-# Three datasets cards at bottom
-ds_y = Inches(5.45)
+# Three dataset cards — bigger, with FUNCTION (what each trains)
+ds_y = Inches(3.5)
 datasets = [
-    ("text-to-sql-mix-v2", "761,155 rows", "10 public sources"),
-    ("chart-reasoning-mix-v1", "~75,000 rows", "nvBench + GPT-4.1-nano"),
-    ("svg-chart-render-v1", "~25,000 rows", "matplotlib SVG re-renders"),
+    {
+        "num": "01",
+        "name": "text-to-sql-mix-v2",
+        "rows": "761,155",
+        "trains": "SQL Generator · Qwen 7B",
+        "what": "Natural-language question + schema → valid SQL query.",
+        "source": "Merged from 10 public datasets (sql-create-context, gretel, knowsql, NSText2SQL, Spider, WikiSQL, etc.). Schemas unified into a 7-column canonical format.",
+    },
+    {
+        "num": "02",
+        "name": "chart-reasoning-mix-v1",
+        "rows": "~75,000",
+        "trains": "Chart Reasoner · Phi-3 Mini",
+        "what": "Question + SQL results → JSON chart spec (type, axes, title).",
+        "source": "25k real NL/chart pairs from nvBench + 50k pairs synthesized via GPT-4.1-nano knowledge distillation over the SQL corpus.",
+    },
+    {
+        "num": "03",
+        "name": "svg-chart-render-v1",
+        "rows": "~25,000",
+        "trains": "SVG Renderer · DeepSeek 1.3B",
+        "what": "Chart spec + data sample → inline SVG markup.",
+        "source": "nvBench charts re-rendered through matplotlib's SVG backend, plus chart-shaped SVGs filtered from the svgen-500k collection.",
+    },
 ]
-cw = Inches(3.85); cg = Inches(0.25)
+
+cw = Inches(3.95); cg = Inches(0.2)
 total_c = cw * 3 + cg * 2
 cx = (SLIDE_W - total_c) / 2
-for i, (name, rows, source) in enumerate(datasets):
-    x = cx + (cw + cg) * i
-    add_rect(slide, x, ds_y, cw, Inches(1.3),
-             fill=SURFACE_RAISED, line=ACCENT, line_w=1.0)
-    add_text(slide, x + Inches(0.2), ds_y + Inches(0.15),
-             cw - Inches(0.4), Inches(0.3),
-             f"DATASET · 0{i+1}", size=9, bold=True, color=ACCENT)
-    add_text(slide, x + Inches(0.2), ds_y + Inches(0.45),
-             cw - Inches(0.4), Inches(0.4),
-             name, size=12, bold=True, color=INK, font=FONT_MONO)
-    add_text(slide, x + Inches(0.2), ds_y + Inches(0.8),
-             cw - Inches(0.4), Inches(0.3),
-             rows, size=11, color=INK)
-    add_text(slide, x + Inches(0.2), ds_y + Inches(1.05),
-             cw - Inches(0.4), Inches(0.3),
-             source, size=10, color=INK_MUTED)
 
-add_footer(slide, "Data sourcing, curation, and datasets built", "03 / 08")
+for i, d in enumerate(datasets):
+    x = cx + (cw + cg) * i
+    add_rect(slide, x, ds_y, cw, Inches(3.3),
+             fill=SURFACE_RAISED, line=INK_FAINT, line_w=0.75)
+
+    # Accent stripe at top of card
+    s = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, x + Inches(0.2), ds_y + Inches(0.18),
+        Inches(0.4), Inches(0.05))
+    s.fill.solid(); s.fill.fore_color.rgb = ACCENT; s.line.fill.background()
+
+    inset = x + Inches(0.2)
+    text_w = cw - Inches(0.4)
+
+    # Dataset number + name
+    add_text(slide, inset, ds_y + Inches(0.32), text_w, Inches(0.25),
+             f"DATASET · {d['num']}", size=9, bold=True, color=ACCENT)
+    add_text(slide, inset, ds_y + Inches(0.6), text_w, Inches(0.4),
+             d["name"], size=14, bold=True, color=INK, font=FONT_MONO)
+
+    # Rows (big)
+    add_text(slide, inset, ds_y + Inches(1.05), text_w, Inches(0.6),
+             d["rows"], size=28, bold=True, color=INK)
+    add_text(slide, inset, ds_y + Inches(1.65), text_w, Inches(0.3),
+             "ROWS", size=8, color=INK_MUTED)
+
+    # Trains label
+    add_text(slide, inset, ds_y + Inches(2.0), text_w, Inches(0.3),
+             "TRAINS", size=8, bold=True, color=INK_MUTED)
+    add_text(slide, inset, ds_y + Inches(2.22), text_w, Inches(0.4),
+             d["trains"], size=11, bold=True, color=INK)
+
+    # What
+    add_text(slide, inset, ds_y + Inches(2.55), text_w, Inches(0.5),
+             d["what"], size=10, color=INK)
+
+    # Source (smaller, muted)
+    add_text(slide, inset, ds_y + Inches(2.95), text_w, Inches(0.5),
+             d["source"], size=9, color=INK_MUTED, line_spacing=1.35)
+
+# Footer-line takeaway
+add_text(slide, Inches(0.83), Inches(7.0), Inches(11.67), Inches(0.3),
+         "All three published openly on Hugging Face Hub under permissive licenses (Apache-2.0, CC-BY-4.0).",
+         size=11, color=INK_MUTED)
+
+add_footer(slide, "Data — sourcing, curation, and three datasets", "03 / 08")
 
 
 # ============================================================ 04, 05, 06 THREE MODELS
