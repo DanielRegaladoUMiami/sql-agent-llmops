@@ -557,12 +557,42 @@ def _make_titanic_csv() -> Path:
     return p
 
 
-SUGGESTED_QUESTIONS = [
-    "What's the survival rate by passenger class?",
-    "Average fare by embarkation port",
-    "Top 5 oldest passengers who survived",
-    "Count of male vs female survivors",
-]
+def _suggest_questions(table: str, schema: list[dict]) -> list[str]:
+    """Generate question suggestions tailored to the loaded dataset's columns."""
+    if not schema:
+        return []
+
+    NUMERIC = {"INTEGER", "BIGINT", "DOUBLE", "FLOAT", "DECIMAL", "NUMERIC", "REAL", "INT", "SMALLINT"}
+    DATE = {"DATE", "TIMESTAMP", "DATETIME", "TIME"}
+    STRING = {"VARCHAR", "STRING", "TEXT", "CHAR"}
+
+    def kind(t: str) -> str:
+        t = (t or "").upper().split("(")[0]
+        if any(k in t for k in NUMERIC): return "num"
+        if any(k in t for k in DATE):    return "date"
+        if any(k in t for k in STRING):  return "str"
+        return "other"
+
+    cols = [(c["name"], kind(c.get("type", ""))) for c in schema]
+    nums = [n for n, k in cols if k == "num"]
+    dates = [n for n, k in cols if k == "date"]
+    strs = [n for n, k in cols if k == "str"]
+
+    qs: list[str] = []
+    if nums:
+        qs.append(f"Top 10 rows by {nums[0]}")
+    if strs and nums:
+        qs.append(f"{nums[0].capitalize()} grouped by {strs[0]}")
+    if strs:
+        qs.append(f"Count of rows by {strs[0]}")
+    if dates and nums:
+        qs.append(f"{nums[0].capitalize()} over time ({dates[0]})")
+    if len(nums) >= 2:
+        qs.append(f"Compare {nums[0]} vs {nums[1]}")
+    if not qs:
+        qs.append(f"Show me the first 10 rows of {table}")
+
+    return qs[:4]
 
 
 # =================================================== HTML render helpers
@@ -739,12 +769,19 @@ def _empty_state_html() -> str:
 
 
 def _ready_state_html() -> str:
-    """Shown when data is loaded but no queries asked yet."""
+    """Shown when data is loaded but no queries asked yet.
+    Suggestions are derived from the actual loaded table's columns."""
+    agent = get_agent()
+    tables = agent.list_tables()
+    suggestions: list[str] = []
+    if tables:
+        schema = agent.executor.get_table_schema(tables[0])
+        suggestions = _suggest_questions(tables[0], schema)
     return (
         '<div class="empty">'
         '<div class="empty-title">Ready</div>'
         '<div class="empty-sub">Ask a question above, or try one of these:</div>'
-        f'{_suggestions_html(SUGGESTED_QUESTIONS[:4])}'
+        f'{_suggestions_html(suggestions)}'
         '</div>'
     )
 
