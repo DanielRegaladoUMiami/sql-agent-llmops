@@ -414,14 +414,23 @@ button.secondary, button[variant="secondary"] {
   background: var(--surface-raised);
   border: 1px solid var(--ink-faint);
   border-radius: var(--radius);
-  padding: 28px;
+  padding: 24px;
   margin: 8px 0 14px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 250ms ease, transform 250ms ease;
   position: relative;
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .chart-wrap:hover { box-shadow: var(--shadow-md); }
-.chart-wrap svg { width: 100% !important; height: auto !important; display: block; }
+.chart-wrap svg {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 460px !important;
+  display: block;
+  margin: 0 auto;
+}
 .chart-badge {
   position: absolute;
   top: 12px;
