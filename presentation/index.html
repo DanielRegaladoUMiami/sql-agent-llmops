@@ -17,83 +17,81 @@
   --surface: #FAFAF9;
   --surface-raised: #FFFFFF;
   --accent: #C96442;
-  --accent-soft: rgba(201, 100, 66, 0.08);
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
           "Helvetica Neue", "Inter", Arial, sans-serif;
   --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-html, body, .reveal { background: var(--surface); color: var(--ink); font-family: var(--font); font-weight: 400; letter-spacing: -0.005em; font-size: 28px; }
+html, body, .reveal { background: var(--surface); color: var(--ink); font-family: var(--font); font-weight: 400; font-size: 26px; }
 .reveal .slides { text-align: left; }
 .reveal .slides section { padding: 0; height: 100%; }
-.reveal .slide-content { padding: 64px 80px; height: 100%; display: flex; flex-direction: column; justify-content: flex-start; position: relative; }
+.reveal .slide-content { padding: 56px 80px; height: 100%; display: flex; flex-direction: column; justify-content: flex-start; position: relative; }
 .reveal .slide-content.center { justify-content: center; }
-.reveal .slide-content::before { content: ""; position: absolute; top: 36px; left: 80px; width: 28px; height: 3px; background: var(--accent); border-radius: 2px; }
-.reveal .no-mark .slide-content::before { display: none; }
 
-.kicker { font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
-.phase-num {
-  display: inline-block;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--accent);
-  border: 1.5px solid var(--accent);
-  border-radius: 999px;
-  padding: 4px 14px;
-  margin-bottom: 14px;
-}
-
-.reveal h1 { font-size: 48px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; color: var(--ink); margin: 0 0 32px; text-transform: none; }
-.reveal h2 { font-size: 38px; font-weight: 600; color: var(--ink); margin: 0 0 24px; text-transform: none; letter-spacing: -0.02em; }
-.reveal h3 { font-size: 22px; font-weight: 500; color: var(--ink); margin: 18px 0 8px; }
-.reveal p { font-size: 22px; line-height: 1.55; color: var(--ink); margin: 0 0 16px; }
-.reveal li { font-size: 22px; line-height: 1.55; color: var(--ink); }
+.reveal h1 { font-size: 40px; font-weight: 600; line-height: 1.2; color: var(--ink); margin: 0 0 20px; text-transform: none; letter-spacing: -0.01em; }
+.reveal h2 { font-size: 30px; font-weight: 600; color: var(--ink); margin: 0 0 16px; text-transform: none; }
+.reveal h3 { font-size: 20px; font-weight: 600; color: var(--ink); margin: 14px 0 8px; }
+.reveal p { font-size: 20px; line-height: 1.55; color: var(--ink); margin: 0 0 14px; }
+.reveal li { font-size: 20px; line-height: 1.6; color: var(--ink); margin-bottom: 6px; }
 .reveal strong { font-weight: 600; color: var(--ink); }
-.reveal em { color: var(--ink-muted); font-style: italic; }
+.reveal em { color: var(--ink); font-style: italic; }
 
+.slide-num { position: absolute; top: 56px; right: 80px; font-size: 13px; color: var(--ink-muted); letter-spacing: 0.06em; }
+.section-label { font-size: 13px; color: var(--ink-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+
+/* Title */
 .title-slide { display: flex !important; flex-direction: column; justify-content: center; }
-.title-slide h1 { font-size: 84px; font-weight: 700; letter-spacing: -0.035em; line-height: 1; margin: 0 0 16px; }
-.title-slide .subtitle { font-size: 26px; color: var(--ink-muted); font-weight: 400; margin: 0 0 64px; }
-.title-slide .meta { font-size: 16px; color: var(--ink-muted); border-top: 1px solid var(--ink-faint); padding-top: 20px; max-width: 540px; line-height: 1.7; }
-.title-slide .meta strong { color: var(--ink); font-weight: 600; }
+.title-slide h1 { font-size: 56px; font-weight: 600; line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+.title-slide .subtitle { font-size: 22px; color: var(--ink-muted); font-weight: 400; margin: 0 0 48px; }
+.title-slide .meta { font-size: 16px; color: var(--ink); border-top: 1px solid var(--ink-faint); padding-top: 18px; max-width: 600px; line-height: 1.7; }
+.title-slide .meta .label { color: var(--ink-muted); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 6px; }
 
-.scene { display: flex !important; flex-direction: column; justify-content: center; }
-.scene .scene-line { font-size: 56px; line-height: 1.15; font-weight: 500; letter-spacing: -0.03em; color: var(--ink); max-width: 1200px; margin: 0; }
-.scene .scene-line .accent { color: var(--accent); }
-.scene .scene-attr { font-size: 18px; color: var(--ink-muted); margin-top: 32px; letter-spacing: 0.04em; }
+/* Code */
+.reveal code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: transparent;
+  color: var(--ink);
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid var(--ink-faint);
+}
+.reveal pre {
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 12px 0;
+  width: auto;
+  box-shadow: none;
+}
+.reveal pre code { font-size: 16px !important; background: transparent; border: none; padding: 0; }
 
-.reveal code { font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-raised); color: var(--ink); padding: 2px 7px; border-radius: 5px; border: 1px solid var(--ink-faint); }
-.reveal pre { background: var(--surface-raised); border: 1px solid var(--ink-faint); border-radius: 12px; padding: 18px 22px; font-size: 17px; line-height: 1.6; box-shadow: 0 1px 2px rgba(0,0,0,0.03); margin: 16px 0; width: auto; }
-.reveal pre code { font-size: 17px !important; background: transparent; border: none; padding: 0; }
-
-.reveal table { width: 100%; border-collapse: collapse; font-size: 18px; margin: 12px 0; }
-.reveal th { text-align: left; font-weight: 600; color: var(--ink); padding: 10px 12px; border-bottom: 1.5px solid var(--ink); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
-.reveal td { padding: 10px 12px; color: var(--ink-muted); border-bottom: 1px solid var(--ink-faint); vertical-align: top; }
+/* Tables */
+.reveal table { width: 100%; border-collapse: collapse; font-size: 17px; margin: 8px 0; }
+.reveal th { text-align: left; font-weight: 600; color: var(--ink); padding: 8px 10px; border-bottom: 1px solid var(--ink); font-size: 13px; text-transform: none; letter-spacing: 0; }
+.reveal td { padding: 8px 10px; color: var(--ink); border-bottom: 1px solid var(--ink-faint); vertical-align: top; font-size: 17px; }
 .reveal td strong { color: var(--ink); }
 .reveal a { color: var(--accent); text-decoration: none; }
 .reveal a:hover { text-decoration: underline; }
 
-.reveal blockquote { border: none; border-left: 2px solid var(--accent); padding: 6px 0 6px 22px; margin: 22px 0; font-size: 24px; color: var(--ink); background: transparent; font-style: normal; font-weight: 400; line-height: 1.4; box-shadow: none; }
+/* Stats */
+.stat-value { font-size: 48px; font-weight: 600; line-height: 1; color: var(--ink); margin: 0; letter-spacing: -0.02em; }
+.stat-label { font-size: 14px; color: var(--ink-muted); margin-top: 6px; }
 
-.stat-value { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: var(--ink); margin: 0; }
-.stat-label { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin-top: 6px; }
+/* Layout */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: start; }
-
-.card { background: var(--surface-raised); border: 1px solid var(--ink-faint); border-radius: 14px; padding: 22px 24px; height: 100%; box-sizing: border-box; }
-.card-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; }
-
-.media { border: 1px solid var(--ink-faint); border-radius: 14px; background: var(--surface-raised); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-.media img { width: 100%; height: auto; display: block; }
-.media-placeholder { border: 1.5px dashed var(--ink-faint); border-radius: 14px; padding: 80px 20px; text-align: center; color: var(--ink-muted); font-size: 14px; background: transparent; }
-
-.reveal .footer { position: absolute; bottom: 24px; left: 80px; right: 80px; display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-muted); letter-spacing: 0.04em; }
+/* Footer */
+.reveal .footer { position: absolute; bottom: 24px; left: 80px; right: 80px; display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-muted); }
 .reveal .progress { color: var(--accent); }
 .reveal .controls { color: var(--accent); }
 
+/* Mermaid */
 .mermaid { background: transparent; text-align: center; }
 .mermaid svg { max-width: 100%; height: auto; }
 
@@ -108,29 +106,48 @@ html, body, .reveal { background: var(--surface); color: var(--ink); font-family
 <!-- ============================================================= -->
 <!-- 01 · TITLE -->
 <!-- ============================================================= -->
-<section class="no-mark">
+<section>
   <div class="slide-content title-slide">
     <h1>SQL Agent</h1>
-    <p class="subtitle">A methodology for shipping multi-model LLM systems</p>
+    <p class="subtitle">A multi-model system for natural-language data analysis</p>
     <div class="meta">
-      <strong>Team</strong><br>
-      Daniel Regalado Cardoso · Nefeli Zafeiri · Oliver Mazariegos · Eleniz Espina<br>
-      MSBA · University of Miami · 2026
+      <span class="label">Authors</span>
+      Daniel Regalado Cardoso, Nefeli Zafeiri, Oliver Mazariegos, Eleniz Espina<br>
+      <span style="color: var(--ink-muted)">MSBA · University of Miami · 2026</span>
     </div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 02 · OPENING SCENE -->
+<!-- 02 · PROBLEM + OBJECTIVE -->
 <!-- ============================================================= -->
-<section class="no-mark">
-  <div class="slide-content scene">
-    <p class="kicker" style="text-align:left">The premise</p>
-    <p class="scene-line">
-      An analyst with a CSV.<br>
-      A question they can't <span class="accent">quite write in SQL</span>.<br>
-      What if the model wrote it?
-    </p>
+<section>
+  <div class="slide-content">
+    <span class="slide-num">02 / 13</span>
+    <p class="section-label">Problem statement</p>
+    <h1>Tabular data analysis still requires SQL knowledge</h1>
+    <div class="grid-2">
+      <div>
+        <p>Business users frequently have:</p>
+        <ul>
+          <li>Tabular data they need to query</li>
+          <li>Specific questions in mind</li>
+          <li>No working SQL knowledge</li>
+        </ul>
+        <p style="margin-top:24px">Existing options (manual SQL, generic chatbots, BI tools) each have trade-offs in cost, accuracy, or accessibility.</p>
+      </div>
+      <div>
+        <h3>Objective</h3>
+        <p>Build a system that:</p>
+        <ol>
+          <li>Accepts a CSV or JSON file as input</li>
+          <li>Accepts a question in natural language</li>
+          <li>Returns the answer as a chart and a written finding</li>
+          <li>Runs at low cost on free GPU infrastructure</li>
+        </ol>
+      </div>
+    </div>
+    <div class="footer"><span>SQL Agent · MSBA UMiami</span><span></span></div>
   </div>
 </section>
 
@@ -139,38 +156,40 @@ html, body, .reveal { background: var(--surface); color: var(--ink); font-family
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <p class="kicker">The methodology</p>
-    <h1>Six phases — from raw datasets to a live agent</h1>
-    <div class="mermaid" style="margin:8px 0">
+    <span class="slide-num">03 / 13</span>
+    <p class="section-label">Methodology</p>
+    <h1>Six phases from raw data to deployed system</h1>
+    <div class="mermaid" style="margin:12px 0">
 flowchart LR
-  P1["1 · Source<br/>10 public datasets"]
-  P2["2 · Curate<br/>1.2M → 723k"]
-  P3["3 · Build<br/>3 datasets"]
-  P4["4 · Train<br/>3 LoRAs · Unsloth"]
-  P5["5 · Architect<br/>Orchestrator + DuckDB"]
-  P6["6 · Ship<br/>HF Space"]
+  P1["1. Source<br/>10 public datasets"]
+  P2["2. Curate<br/>1.2M to 723k rows"]
+  P3["3. Build<br/>3 task datasets"]
+  P4["4. Train<br/>3 LoRA adapters"]
+  P5["5. Architect<br/>Orchestrator + DuckDB"]
+  P6["6. Deploy<br/>Hugging Face Spaces"]
   P1 --> P2 --> P3 --> P4 --> P5 --> P6
   classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
   classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   class P1,P2,P3 node
   class P4,P5,P6 accent
     </div>
-    <p style="margin-top:24px">Each phase has a question we had to answer. Each one constrained the next. <strong>This is the methodology we'd use again on any LLM project.</strong></p>
-    <div class="footer"><span>Methodology</span><span>03</span></div>
+    <p style="margin-top:18px">Each phase produces a reproducible artifact: a dataset, a model adapter, or a deployable component. The repo contains the scripts to recreate each step from scratch.</p>
+    <div class="footer"><span>Methodology overview</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 04 · PHASE 1 · SOURCE -->
+<!-- 04 · PHASE 1 · SOURCING -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 1 · Source</span>
-    <h1>Don't reinvent — curate from what already exists</h1>
+    <span class="slide-num">04 / 13</span>
+    <p class="section-label">Phase 1 — Sourcing</p>
+    <h1>Aggregating ten public text-to-SQL datasets</h1>
     <div class="grid-2">
       <div>
-        <p>Ten public text-to-SQL datasets, merged into one canonical training set:</p>
-        <ul style="font-size:18px; line-height:1.85">
+        <p>We selected ten existing datasets covering different schemas and SQL dialects:</p>
+        <ul style="font-size:17px; line-height:1.75">
           <li><code>b-mc2/sql-create-context</code></li>
           <li><code>gretelai/synthetic_text_to_sql</code></li>
           <li><code>knowrohit07/know_sql</code></li>
@@ -184,160 +203,194 @@ flowchart LR
         </ul>
       </div>
       <div>
-        <p>The question we faced:</p>
-        <blockquote>"Should we build our own dataset, or assemble from public sources?"</blockquote>
-        <p>Building from scratch would have taken weeks and produced a smaller, lower-quality corpus. <strong>The internet had already done most of the work.</strong></p>
-        <p style="margin-top:24px">Combined raw size: <strong>~1.2 million rows</strong>. Combined quality: <em>uneven</em>. Schemas inconsistent. Duplicates plentiful.</p>
+        <h3>Rationale</h3>
+        <p>Building a corpus from scratch was not feasible within the project timeline. Public datasets give us schema diversity and large coverage with permissive licenses.</p>
+        <h3>Combined size</h3>
+        <p style="font-size:17px">Approximately 1.2 million rows before cleaning. Heterogeneous formats and varying quality, requiring substantial pre-processing.</p>
       </div>
     </div>
-    <div class="footer"><span>Phase 1 · Source</span><span>04</span></div>
+    <div class="footer"><span>Phase 1 · Sourcing</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 05 · PHASE 2 · CURATE -->
+<!-- 05 · PHASE 2 · CURATION -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 2 · Curate</span>
-    <h1>From 1.2M raw rows to 723k usable training examples</h1>
-    <div class="mermaid" style="margin:8px 0">
+    <span class="slide-num">05 / 13</span>
+    <p class="section-label">Phase 2 — Curation</p>
+    <h1>Cleaning the merged corpus</h1>
+    <div class="mermaid" style="margin:12px 0">
 flowchart LR
-  S["10 raw sources<br/>1.2M rows"] --> U["Schema unification<br/>(7-column canonical)"]
-  U --> D["Deduplication<br/>(question hashing)"]
+  S["10 raw sources<br/>1.2M rows"] --> U["Schema unification<br/>7-column canonical format"]
+  U --> D["Deduplication<br/>question-text hashing"]
   D --> F["Sequence-length filter<br/>≤ 1024 tokens"]
   F --> X["761,155 unique rows"]
-  X --> SP["Split 95 / 5<br/>723k train · 19k val · 19k test"]
+  X --> SP["Train / Val / Test split<br/>723k / 19k / 19k"]
   classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
   classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   class X,SP accent
     </div>
     <div class="grid-4" style="margin-top:18px">
       <div>
-        <p class="stat-value" style="font-size:42px">1.2M</p>
-        <p class="stat-label">Raw</p>
+        <p class="stat-value">1.2M</p>
+        <p class="stat-label">Raw rows</p>
       </div>
       <div>
-        <p class="stat-value" style="font-size:42px">761k</p>
-        <p class="stat-label">Deduplicated</p>
+        <p class="stat-value">761k</p>
+        <p class="stat-label">After deduplication</p>
       </div>
       <div>
-        <p class="stat-value" style="font-size:42px">93%</p>
+        <p class="stat-value">93%</p>
         <p class="stat-label">Pass length filter</p>
       </div>
       <div>
-        <p class="stat-value" style="font-size:42px">723k</p>
+        <p class="stat-value">723k</p>
         <p class="stat-label">Final training set</p>
       </div>
     </div>
-    <p style="font-size:18px; color:var(--ink-muted); margin-top:18px">All transforms reproducible via UV scripts in <code>training/data_pipelines/</code>.</p>
-    <div class="footer"><span>Phase 2 · Curate</span><span>05</span></div>
+    <p style="font-size:16px; color:var(--ink-muted); margin-top:14px">All transformations are implemented as UV scripts in <code>training/data_pipelines/</code> and are reproducible end to end.</p>
+    <div class="footer"><span>Phase 2 · Curation</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 06 · PHASE 3 · BUILD -->
+<!-- 06 · PHASE 3 · DATASETS BUILT -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 3 · Build</span>
-    <h1>One dataset wasn't enough — we built three</h1>
-    <div class="grid-3" style="margin-top:8px">
-      <div class="card">
-        <div class="card-title">Dataset · 01</div>
-        <h3 style="margin:4px 0 8px">text-to-sql-mix-v2</h3>
-        <p class="stat-value" style="font-size:42px">761k</p>
-        <p style="font-size:15px; color:var(--ink-muted); margin-top:10px">NL → SQL pairs from 10 merged public sources</p>
-      </div>
-      <div class="card">
-        <div class="card-title">Dataset · 02</div>
-        <h3 style="margin:4px 0 8px">chart-reasoning-mix-v1</h3>
-        <p class="stat-value" style="font-size:42px">75k</p>
-        <p style="font-size:15px; color:var(--ink-muted); margin-top:10px">nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)</p>
-      </div>
-      <div class="card">
-        <div class="card-title">Dataset · 03</div>
-        <h3 style="margin:4px 0 8px">svg-chart-render-v1</h3>
-        <p class="stat-value" style="font-size:42px">25k</p>
-        <p style="font-size:15px; color:var(--ink-muted); margin-top:10px">nvBench charts re-rendered through matplotlib's SVG backend</p>
-      </div>
-    </div>
-    <br>
-    <p>Three roles. Three datasets. Each one published openly on Hugging Face under permissive licenses.</p>
-    <table style="font-size:15px">
+    <span class="slide-num">06 / 13</span>
+    <p class="section-label">Phase 3 — Building task datasets</p>
+    <h1>Three datasets, one per model task</h1>
+    <table>
+      <thead>
+        <tr><th>Dataset</th><th>Rows</th><th>Source</th><th>Hub</th></tr>
+      </thead>
       <tbody>
-        <tr><td><strong>text-to-sql-mix-v2</strong></td><td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2" target="_blank">huggingface.co/.../text-to-sql-mix-v2</a></td></tr>
-        <tr><td><strong>chart-reasoning-mix-v1</strong></td><td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1" target="_blank">huggingface.co/.../chart-reasoning-mix-v1</a></td></tr>
-        <tr><td><strong>svg-chart-render-v1</strong></td><td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1" target="_blank">huggingface.co/.../svg-chart-render-v1</a></td></tr>
+        <tr>
+          <td><strong>text-to-sql-mix-v2</strong></td>
+          <td>761,155</td>
+          <td>10 merged public sources</td>
+          <td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2" target="_blank">link</a></td>
+        </tr>
+        <tr>
+          <td><strong>chart-reasoning-mix-v1</strong></td>
+          <td>~75,000</td>
+          <td>nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)</td>
+          <td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1" target="_blank">link</a></td>
+        </tr>
+        <tr>
+          <td><strong>svg-chart-render-v1</strong></td>
+          <td>~25,000</td>
+          <td>nvBench charts re-rendered via matplotlib SVG backend</td>
+          <td><a href="https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1" target="_blank">link</a></td>
+        </tr>
       </tbody>
     </table>
-    <div class="footer"><span>Phase 3 · Build</span><span>06</span></div>
+    <p style="margin-top:20px">All three are published openly on Hugging Face Hub under permissive licenses (Apache-2.0 and CC-BY-4.0).</p>
+    <div class="footer"><span>Phase 3 · Datasets</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 07 · PHASE 4 · WHY UNSLOTH -->
+<!-- 07 · PHASE 4 · TRAINING SETUP -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 4 · Train · choice of tooling</span>
-    <h1>Fine-tune a 7B model on a single GPU — without paying $1,000</h1>
+    <span class="slide-num">07 / 13</span>
+    <p class="section-label">Phase 4 — Training setup</p>
+    <h1>QLoRA via Unsloth</h1>
     <div class="grid-2">
       <div>
-        <p>The decision point:</p>
-        <blockquote>"Vanilla <code>transformers</code> on a 4× A100 cluster, or Unsloth on one L40S?"</blockquote>
-        <p>Unsloth uses 4-bit quantization + LoRA + custom Triton kernels. Same training math, dramatically less memory and time.</p>
+        <p>We use 4-bit QLoRA with the Unsloth library for all three fine-tunes.</p>
+        <p>Reasons for this choice:</p>
+        <ul>
+          <li>Allows training a 7B model on a single 48 GB GPU</li>
+          <li>Approximately 2× faster than vanilla <code>transformers</code></li>
+          <li>Approximately 40% lower memory consumption</li>
+          <li>Output is a 160 MB adapter rather than 14 GB of full weights</li>
+        </ul>
       </div>
       <div>
-        <table style="font-size:17px">
+        <table style="font-size:16px">
           <thead>
             <tr><th></th><th>Vanilla</th><th>Unsloth</th></tr>
           </thead>
           <tbody>
-            <tr><td>7B on 48 GB GPU</td><td>won't fit</td><td><strong>fits</strong></td></tr>
-            <tr><td>Speed</td><td>1×</td><td><strong>2×</strong></td></tr>
-            <tr><td>Memory</td><td>1×</td><td><strong>40% less</strong></td></tr>
-            <tr><td>Output</td><td>14 GB</td><td><strong>160 MB adapter</strong></td></tr>
+            <tr><td>7B on 48 GB GPU</td><td>does not fit</td><td>fits in 4-bit</td></tr>
+            <tr><td>Speed</td><td>baseline</td><td>~2× faster</td></tr>
+            <tr><td>Memory</td><td>baseline</td><td>~40% less</td></tr>
+            <tr><td>Output artifact</td><td>14 GB</td><td>160 MB adapter</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <div class="footer"><span>Phase 4 · Train · choice</span><span>07</span></div>
+    <div class="footer"><span>Phase 4 · Training setup</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 08 · PHASE 4 · TRAINING RUN -->
+<!-- 08 · PHASE 4 · TRAINING RESULTS · THREE MODELS -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 4 · Train · the run</span>
-    <h1>13.5 hours, one L40S, one epoch, loss 0.27</h1>
-    <div class="grid-2">
+    <span class="slide-num">08 / 13</span>
+    <p class="section-label">Phase 4 — Training results</p>
+    <h1>Three independent fine-tunes, one role each</h1>
+    <table style="font-size:16px; margin:8px 0">
+      <thead>
+        <tr><th>Model</th><th>Base</th><th>Dataset</th><th>Hardware</th><th>Time</th><th>Final loss</th><th>Cost</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>SQL Generator</strong></td>
+          <td>Qwen2.5-Coder-7B</td>
+          <td>text-to-sql-mix-v2 (672k)</td>
+          <td>L40S 48 GB</td>
+          <td>13.5 h</td>
+          <td>0.2658</td>
+          <td>~$24</td>
+        </tr>
+        <tr>
+          <td><strong>Chart Reasoner</strong></td>
+          <td>Phi-3-Mini 4k</td>
+          <td>chart-reasoning-mix-v1 (75k)</td>
+          <td>Colab / HF Jobs</td>
+          <td>~3 h</td>
+          <td>~0.31</td>
+          <td>~$3</td>
+        </tr>
+        <tr>
+          <td><strong>SVG Renderer</strong></td>
+          <td>DeepSeek-Coder 1.3B</td>
+          <td>svg-chart-render-v1 (25k)</td>
+          <td>Colab T4</td>
+          <td>~2 h</td>
+          <td>~0.40</td>
+          <td>~$1</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="grid-2" style="margin-top:18px">
       <div>
-        <table style="font-size:17px">
-          <tbody>
-            <tr><td>Base</td><td><strong>Qwen2.5-Coder-7B-Instruct</strong></td></tr>
-            <tr><td>Method</td><td>QLoRA r=16, α=32 (4-bit)</td></tr>
-            <tr><td>Examples used</td><td>672,949</td></tr>
-            <tr><td>Sequences after packing</td><td><strong>154,462</strong></td></tr>
-            <tr><td>Hardware</td><td>1× NVIDIA L40S (48 GB)</td></tr>
-            <tr><td>Wall-clock</td><td><strong>13.5 hours</strong></td></tr>
-            <tr><td>Final loss</td><td><strong>0.2658</strong></td></tr>
-            <tr><td>Total cost</td><td><strong>~$24</strong></td></tr>
-          </tbody>
-        </table>
+        <h3 style="margin-top:0">Common training recipe</h3>
+        <ul style="font-size:17px">
+          <li>QLoRA, r=16, α=32, 4-bit base</li>
+          <li>1 epoch, no early stopping</li>
+          <li>TRL <code>packing=True</code> for the SQL Generator (4× speedup, 21 h → 13.5 h)</li>
+          <li>Outputs: small adapters (22–161 MB), not full models</li>
+        </ul>
       </div>
       <div class="mermaid">
 xychart-beta
-  title "Training loss · 1 epoch · 9,654 steps"
+  title "SQL Generator · loss curve (9,654 steps)"
   x-axis "Step" [0, 2000, 4000, 6000, 9654]
   y-axis "Loss" 0 --> 1
   line [0.92, 0.41, 0.32, 0.28, 0.27]
       </div>
     </div>
-    <blockquote style="margin-top:24px">The trick that mattered: <code>packing=True</code> in TRL. Concatenated 723k examples into 154k sequences of 1024 tokens. <strong>4× speedup. ~$14 saved.</strong></blockquote>
-    <div class="footer"><span>Phase 4 · Train · run</span><span>08</span></div>
+    <div class="footer"><span>Phase 4 · Results</span><span></span></div>
   </div>
 </section>
 
@@ -346,13 +399,14 @@ xychart-beta
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 5 · Architect · adapters</span>
-    <h1>What we ship is the diff, not the model</h1>
+    <span class="slide-num">09 / 13</span>
+    <p class="section-label">Phase 5 — Architecture · adapters</p>
+    <h1>The system uses LoRA adapters, not full models</h1>
     <div class="mermaid" style="margin:8px 0">
 flowchart LR
-  B["Public base model<br/>(frozen)<br/>~14 GB"]
-  L["Our LoRA adapter<br/>(trained, small)<br/>~160 MB"]
-  M["The specialist<br/>(merged at runtime)"]
+  B["Public base model<br/>(frozen, ~14 GB)"]
+  L["LoRA adapter<br/>(trained, ~160 MB)"]
+  M["Specialist model<br/>(merged at runtime)"]
   B --> M
   L --> M
   classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
@@ -360,9 +414,9 @@ flowchart LR
   class L accent
   class M accent
     </div>
-    <table>
+    <table style="font-size:16px">
       <thead>
-        <tr><th>Adapter</th><th>Base</th><th>Adapter size</th></tr>
+        <tr><th>Adapter</th><th>Base model</th><th>Size</th></tr>
       </thead>
       <tbody>
         <tr><td><a href="https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora" target="_blank">sql-generator-qwen25-coder-7b-lora</a></td><td>Qwen 2.5 Coder 7B</td><td>161 MB</td></tr>
@@ -370,23 +424,24 @@ flowchart LR
         <tr><td><a href="https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora" target="_blank">svg-renderer-deepseek-coder-1.3b-lora</a></td><td>DeepSeek Coder 1.3B</td><td>22 MB</td></tr>
       </tbody>
     </table>
-    <p style="font-size:18px; color:var(--ink-muted); margin-top:12px">Combined adapter weight: <strong>221 MB</strong>. Base models stay public — we just teach them new tricks.</p>
-    <div class="footer"><span>Phase 5 · Adapters</span><span>09</span></div>
+    <p style="font-size:17px; margin-top:14px">The combined adapter weights total 221 MB. Base models remain public; only the task-specific adjustments are stored separately.</p>
+    <div class="footer"><span>Phase 5 · Adapters</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 10 · PHASE 5 · ARCHITECTURE -->
+<!-- 10 · PHASE 5 · SYSTEM ARCHITECTURE -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 5 · Architect · the agent</span>
-    <h1>Per query: 4 LLM calls, 5–8 seconds, end to end</h1>
-    <div class="mermaid" style="margin:8px 0">
+    <span class="slide-num">10 / 13</span>
+    <p class="section-label">Phase 5 — System architecture</p>
+    <h1>End-to-end query flow</h1>
+    <div class="mermaid" style="margin:0">
 flowchart LR
-  subgraph IN["User"]
+  subgraph IN["User input"]
     U1["CSV / JSON / Parquet"]
-    U2["Question in English"]
+    U2["Question (NL)"]
   end
   SX["Schema extractor"] --> DB[("DuckDB<br/>in-memory")]
   U1 --> SX
@@ -410,91 +465,97 @@ flowchart LR
   class OUT out
   class DB db
     </div>
-    <p>Three adapters loaded <strong>once at module level</strong> into a half-H200 via Hugging Face's ZeroGPU. Self-correcting SQL: if a query fails, the model retries with the error in context.</p>
-    <div class="footer"><span>Phase 5 · Architecture</span><span>10</span></div>
+    <p style="margin-top:14px">Per query: four model invocations and a DuckDB execution, with a typical end-to-end latency of 5 to 8 seconds on a warm GPU. All adapters are loaded once at module level on a half-H200 via Hugging Face ZeroGPU.</p>
+    <p style="font-size:17px; color:var(--ink-muted)">When a generated SQL query fails to execute, the orchestrator retries up to three times with the error message added as context.</p>
+    <div class="footer"><span>Phase 5 · System architecture</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 11 · PHASE 6 · SHIP + COST -->
+<!-- 11 · PHASE 6 · COST -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <span class="phase-num">Phase 6 · Ship · the bottom line</span>
-    <h1>$30. All in.</h1>
+    <span class="slide-num">11 / 13</span>
+    <p class="section-label">Phase 6 — Deployment and cost</p>
+    <h1>Total compute cost: approximately $30</h1>
     <div class="grid-2">
       <div>
-        <table style="font-size:17px">
+        <table style="font-size:16px">
           <thead>
             <tr><th>Stage</th><th>Compute</th><th>Cost</th></tr>
           </thead>
           <tbody>
-            <tr><td>SQL Generator training</td><td>HF Jobs L40S, 13.5 h</td><td><strong>~$24</strong></td></tr>
+            <tr><td>SQL Generator training</td><td>HF Jobs L40S, 13.5 h</td><td>~$24</td></tr>
             <tr><td>Chart Reasoner training</td><td>Colab / HF Jobs</td><td>~$3</td></tr>
             <tr><td>SVG Renderer training</td><td>Colab / HF Jobs</td><td>~$1</td></tr>
-            <tr><td>Chart dataset distillation</td><td>gpt-4.1-nano Batch</td><td>~$2.50</td></tr>
-            <tr><td>Inference hosting</td><td>HF Spaces ZeroGPU</td><td><strong>$0</strong></td></tr>
+            <tr><td>GPT-4.1-nano dataset distillation</td><td>OpenAI Batch API</td><td>~$2.50</td></tr>
+            <tr><td>Inference hosting</td><td>HF Spaces ZeroGPU</td><td>$0</td></tr>
             <tr><td><strong>Total</strong></td><td></td><td><strong>~$30</strong></td></tr>
           </tbody>
         </table>
       </div>
-      <div style="display:flex; flex-direction:column; justify-content:center">
-        <p class="stat-value" style="font-size:140px">$30</p>
-        <p class="stat-label" style="font-size:15px">All-in to train three production fine-tunes</p>
-        <br>
-        <blockquote>Less than a steak dinner.<br>Less than one OpenAI eval.<br>Open weights, reproducible.</blockquote>
+      <div>
+        <h3>Why the cost is low</h3>
+        <ul style="font-size:18px">
+          <li>Unsloth QLoRA reduces training memory and time</li>
+          <li>Sequence packing further reduces training time</li>
+          <li>HF Spaces ZeroGPU provides free on-demand GPU for inference</li>
+          <li>Only adapters are stored, not full model weights</li>
+        </ul>
       </div>
     </div>
-    <div class="footer"><span>Phase 6 · Cost</span><span>11</span></div>
+    <div class="footer"><span>Phase 6 · Cost</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
 <!-- 12 · DEMO -->
 <!-- ============================================================= -->
-<section class="no-mark">
-  <div class="slide-content scene">
-    <p class="kicker" style="text-align:left">Live demo</p>
-    <p class="scene-line">
-      Drop a CSV.<br>
-      Type a question.<br>
-      <span class="accent">Three fine-tuned models</span> answer in five seconds.
+<section>
+  <div class="slide-content center" style="text-align:center; align-items:center">
+    <span class="slide-num">12 / 13</span>
+    <p class="section-label" style="text-align:center">Demonstration</p>
+    <h1 style="text-align:center; font-size:48px">Live system demo</h1>
+    <p style="font-size:22px; margin-top:24px"><a href="https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent" target="_blank"><strong>huggingface.co/spaces/DanielRegaladoCardoso/sql-agent</strong></a></p>
+    <p style="font-size:17px; color:var(--ink-muted); max-width:720px; margin: 24px auto 0; text-align:center">
+      Upload a CSV, ask a question in English. The system returns the generated SQL, query results, a chart, and a one to two sentence written finding.
     </p>
-    <p class="scene-attr">— <a href="https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent" target="_blank">huggingface.co/spaces/DanielRegaladoCardoso/sql-agent</a></p>
+    <div class="footer"><span>Demonstration</span><span></span></div>
   </div>
 </section>
 
 <!-- ============================================================= -->
-<!-- 13 · CLOSING -->
+<!-- 13 · CONCLUSION -->
 <!-- ============================================================= -->
 <section>
   <div class="slide-content">
-    <p class="kicker">Closing</p>
-    <h1>Three fine-tunes. Thirty dollars. Thirteen and a half hours.</h1>
+    <span class="slide-num">13 / 13</span>
+    <p class="section-label">Conclusion</p>
+    <h1>Summary and future work</h1>
     <div class="grid-2">
       <div>
-        <h3>Open source</h3>
+        <h3>What we delivered</h3>
         <ul style="font-size:18px">
-          <li>Repo · <a href="https://github.com/DanielRegaladoUMiami/sql-agent-llmops" target="_blank">github.com/DanielRegaladoUMiami/sql-agent-llmops</a></li>
-          <li>Space · <a href="https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent" target="_blank">hf.co/spaces/DanielRegaladoCardoso/sql-agent</a></li>
-          <li>3 LoRAs on Hugging Face Hub</li>
-          <li>3 datasets, fully reproducible</li>
+          <li>Three open-source datasets on Hugging Face</li>
+          <li>Three QLoRA adapters trained on those datasets</li>
+          <li>A working multi-model agent that answers questions about uploaded data</li>
+          <li>Total compute cost approximately $30</li>
         </ul>
       </div>
       <div>
-        <h3>Where it goes next</h3>
+        <h3>Limitations and future work</h3>
         <ul style="font-size:18px">
-          <li>Multi-turn conversation memory</li>
-          <li>Eval on Spider / WikiSQL / BIRD</li>
-          <li>Anomaly detection at upload</li>
-          <li>Statistical summary at ingest</li>
+          <li>Quantitative evaluation on Spider, WikiSQL, BIRD</li>
+          <li>Multi-turn conversational memory</li>
+          <li>Anomaly detection on uploaded data</li>
+          <li>Statistical summary at ingestion</li>
         </ul>
       </div>
     </div>
-    <br>
-    <p style="text-align:center; font-size:32px; color:var(--ink); margin-top:48px; font-weight:500">Thank you.</p>
-    <p style="text-align:center; font-size:14px; color:var(--ink-muted); margin-top:8px">Daniel Regalado Cardoso · Nefeli Zafeiri · Oliver Mazariegos · Eleniz Espina</p>
-    <div class="footer"><span>Closing</span><span>13</span></div>
+    <p style="font-size:17px; margin-top:32px"><strong>Repository:</strong> <a href="https://github.com/DanielRegaladoUMiami/sql-agent-llmops" target="_blank">github.com/DanielRegaladoUMiami/sql-agent-llmops</a></p>
+    <p style="text-align:center; font-size:14px; color:var(--ink-muted); margin-top:36px">Daniel Regalado Cardoso · Nefeli Zafeiri · Oliver Mazariegos · Eleniz Espina · MSBA UMiami 2026</p>
+    <div class="footer"><span>Conclusion</span><span></span></div>
   </div>
 </section>
 
