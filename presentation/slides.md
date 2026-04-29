@@ -6,272 +6,136 @@ paginate: true
 backgroundColor: "#FAFAF9"
 color: "#0E0E0E"
 header: ""
-footer: "SQL Agent LLMOps · Daniel Regalado · MSBA UMiami"
+footer: "SQL Agent · MSBA UMiami"
 style: |
-  /* Match the actual project's design system — same as the live app & README */
   :root {
     --ink: #0E0E0E;
     --ink-muted: #5A5A5A;
     --ink-faint: #E5E5E5;
     --surface: #FAFAF9;
     --surface-raised: #FFFFFF;
-    --accent: #C96442;          /* Warm amber — project signature */
-    --accent-soft: rgba(201, 100, 66, 0.08);
-    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-            "Helvetica Neue", "Inter", Arial, sans-serif;
-    --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --accent: #C96442;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "Inter", Arial, sans-serif;
+    --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
   }
-
   section {
     font-family: var(--font);
     background: var(--surface);
     color: var(--ink);
     padding: 56px 72px;
-    letter-spacing: -0.005em;
     font-size: 22px;
     line-height: 1.5;
     justify-content: flex-start;
   }
-
-  /* Title slide */
-  section.lead { justify-content: center; text-align: left; padding-left: 96px; }
-  section.lead h1 {
-    font-size: 56px;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    line-height: 1.05;
-    margin: 0 0 12px;
-  }
-  section.lead h2 {
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--ink-muted);
-    letter-spacing: 0;
-    margin: 0 0 32px;
-    text-transform: none;
-  }
-  section.lead .meta {
-    font-size: 16px;
-    color: var(--ink-muted);
-    border-top: 1px solid var(--ink-faint);
-    padding-top: 16px;
-    max-width: 360px;
-  }
-
-  /* Section labels (mimics README "🤗 Models on..." style) */
+  section.lead { justify-content: center; }
+  h1 { font-size: 38px; font-weight: 600; color: var(--ink); margin: 0 0 22px; line-height: 1.15; letter-spacing: -0.01em; }
   h2 {
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--ink-muted);
     margin: 0 0 8px;
   }
-
-  h1 {
-    font-size: 38px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    margin: 0 0 28px;
-    line-height: 1.15;
-    color: var(--ink);
-  }
-
-  h3 {
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--ink);
-    margin: 18px 0 8px;
-  }
-
-  p, li {
-    font-size: 20px;
-    color: var(--ink);
-    line-height: 1.55;
-  }
-  strong { font-weight: 600; color: var(--ink); }
-  em { color: var(--ink-muted); font-style: normal; }
-
-  /* Code (matches README inline code) */
+  h3 { font-size: 18px; font-weight: 600; color: var(--ink); margin: 14px 0 8px; }
+  p, li { font-size: 19px; color: var(--ink); }
+  strong { color: var(--ink); font-weight: 600; }
   code {
     font-family: var(--font-mono);
-    font-size: 17px;
+    font-size: 16px;
     background: var(--surface-raised);
     color: var(--ink);
-    padding: 2px 8px;
+    padding: 1px 6px;
     border-radius: 4px;
     border: 1px solid var(--ink-faint);
   }
   pre {
     background: var(--surface-raised);
     border: 1px solid var(--ink-faint);
-    border-radius: 10px;
-    padding: 16px 20px;
-    font-size: 17px;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 15px;
     line-height: 1.55;
-    overflow-x: auto;
   }
-  pre code { background: transparent; border: none; padding: 0; font-size: 17px; }
-
-  /* Tables — match README minimalist style */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 18px;
-    margin: 8px 0;
-  }
-  th {
-    text-align: left;
-    font-weight: 600;
-    color: var(--ink);
-    padding: 10px 12px;
-    border-bottom: 1.5px solid var(--ink);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-  td {
-    padding: 9px 12px;
-    color: var(--ink-muted);
-    border-bottom: 1px solid var(--ink-faint);
-    vertical-align: top;
-  }
-  td strong { color: var(--ink); }
-
-  /* Block quotes — match README narrator style (amber left border) */
+  table { width: 100%; border-collapse: collapse; font-size: 16px; margin: 8px 0; }
+  th { text-align: left; font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--ink); font-size: 12px; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--ink-faint); font-size: 16px; vertical-align: top; }
   blockquote {
     border: none;
     border-left: 2px solid var(--accent);
-    padding: 6px 0 6px 22px;
-    margin: 22px 0;
-    font-size: 22px;
+    padding: 4px 0 4px 18px;
+    margin: 18px 0;
+    font-size: 19px;
     color: var(--ink);
-    font-weight: 400;
-    line-height: 1.4;
+    font-style: normal;
   }
-
-  /* Stats */
-  .stat-value {
-    font-size: 56px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.025em;
-    color: var(--ink);
-    margin: 0;
-  }
-  .stat-label {
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-muted);
-    margin-top: 6px;
-  }
-
-  /* Layout grids */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: start; }
-
-  /* Cards — same as README chips */
+  .stat-value { font-size: 44px; font-weight: 600; line-height: 1; letter-spacing: -0.02em; color: var(--ink); margin: 0; }
+  .stat-label { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   .card {
     background: var(--surface-raised);
     border: 1px solid var(--ink-faint);
-    border-radius: 14px;
-    padding: 20px 22px;
+    border-radius: 12px;
+    padding: 18px 20px;
   }
-
-  /* Section accent line on slide top-left (matches README YAML feel) */
-  section::before {
-    content: "";
-    position: absolute;
-    top: 32px;
-    left: 72px;
-    width: 24px;
-    height: 3px;
-    background: var(--accent);
-    border-radius: 2px;
-  }
-  section.lead::before { left: 96px; top: 96px; }
-  section.no-mark::before { display: none; }
-
-  /* Footer + page number */
-  footer { color: var(--ink-muted); font-size: 11px; }
-  section::after {
-    color: var(--ink-muted);
+  .card-accent { border-top: 3px solid var(--accent); }
+  .card-title {
     font-size: 11px;
-    bottom: 24px;
-    right: 32px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 6px;
   }
-
-  /* Mermaid responsive */
-  .mermaid svg { max-width: 100% !important; height: auto !important; }
-  svg[id^="mermaid"] { max-width: 100% !important; height: auto !important; }
+  .meta-row { font-size: 14px; color: var(--ink-muted); margin: 4px 0; }
+  .meta-row strong { color: var(--ink); }
+  section a { color: var(--accent); text-decoration: none; }
 ---
 
 <!-- _class: lead -->
 <!-- _paginate: false -->
-<!-- _footer: "" -->
 
 # SQL Agent
-## Multi-Model LLMOps for Text-to-SQL
 
-<div class="meta">
+A multi-model system for natural-language data analysis
 
-**Daniel Regalado Cardoso**
+<br>
+
+**Daniel Regalado Cardoso · Nefeli Zafeiri · Oliver Mazariegos · Eleniz Espina**
 MSBA · University of Miami · 2026
 
-</div>
-
 ---
 
-## Today
+## Problem statement
 
-# Agenda
-
-| Step | What we cover |
-|---|---|
-| 01 · **Why** | The problem we set out to solve |
-| 02 · **Data** | Sourcing 10 public datasets, treating, splitting |
-| 03 · **Hub** | Publishing three datasets to Hugging Face |
-| 04 · **Training** | Three QLoRA fine-tunes with Unsloth |
-| 05 · **Architecture** | How the agent orchestrates them |
-| 06 · **Demo** | Live, on Hugging Face Spaces |
-
----
-
-## Why
-
-# Most data is locked behind SQL
+# Tabular data analysis still requires SQL knowledge
 
 <div class="grid-2">
 
 <div>
 
-A typical analyst opens a CSV, freezes on the question, and either:
+Business users frequently have:
 
-- Asks the data team and waits 3 days
-- Or gives up and looks at the file blind
+- Tabular data they need to query
+- Specific questions in mind
+- No working SQL knowledge
 
-> Writing SQL is friction. Asking a question is not.
-
-The bet: **let the model write the SQL.**
+Existing options (manual SQL, generic chatbots, BI tools) each have trade-offs in cost, accuracy, or accessibility.
 
 </div>
 
 <div>
 
-<p class="stat-value">1.8M</p>
-<p class="stat-label">rows in a sample CSV</p>
+### Objective
 
-<br>
+Build a system that:
 
-<p class="stat-value">14</p>
-<p class="stat-label">columns</p>
-
-<br>
-
-<p class="stat-value">~0</p>
-<p class="stat-label">questions answered without SQL</p>
+1. Accepts a CSV or JSON file as input
+2. Accepts a question in natural language
+3. Returns the answer as a chart and a written finding
+4. Runs at low cost on free GPU infrastructure
 
 </div>
 
@@ -279,43 +143,38 @@ The bet: **let the model write the SQL.**
 
 ---
 
-## The thesis
+## Methodology
 
-# One specialist per task — not one giant model
+# Six phases from raw data to deployed system
 
 ```mermaid
 flowchart LR
-  Q["Question in English"]
-  A["SQL specialist<br/>Qwen 2.5 Coder 7B"]
-  B["Chart specialist<br/>Phi-3 Mini 3.8B"]
-  C["SVG specialist<br/>DeepSeek 1.3B"]
-  R["Chart + insight"]
-
-  Q --> A --> B --> C --> R
-
-  classDef in fill:#FAFAF9,stroke:#5A5A5A,color:#0E0E0E
-  classDef model fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
-  classDef out fill:#C96442,stroke:#0E0E0E,color:#FFFFFF
-  class Q in
-  class A,B,C model
-  class R out
+  P1["1. Source<br/>10 public datasets"]
+  P2["2. Curate<br/>1.2M to 723k rows"]
+  P3["3. Build<br/>3 task datasets"]
+  P4["4. Train<br/>3 LoRA adapters"]
+  P5["5. Architect<br/>Orchestrator + DuckDB"]
+  P6["6. Deploy<br/>Hugging Face Spaces"]
+  P1 --> P2 --> P3 --> P4 --> P5 --> P6
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  class P1,P2,P3 node
+  class P4,P5,P6 accent
 ```
 
-<br>
-
-**Three small, focused models** beat one large generic model on narrow tasks — and run on a single GPU.
+Each phase produces a reproducible artifact. Repository contains the scripts to recreate each step.
 
 ---
 
-## Data · sourcing
+## Phase 1 — Sourcing
 
-# We didn't reinvent — we curated
+# Aggregating ten public text-to-SQL datasets
 
 <div class="grid-2">
 
 <div>
 
-Ten public text-to-SQL datasets, merged into one canonical training set:
+Selected ten existing datasets covering different schemas and SQL dialects:
 
 - `b-mc2/sql-create-context`
 - `gretelai/synthetic_text_to_sql`
@@ -332,18 +191,13 @@ Ten public text-to-SQL datasets, merged into one canonical training set:
 
 <div>
 
-```mermaid
-flowchart TD
-  S1["10 raw sources<br/>~1.2M rows"] --> U[Schema unification]
-  U --> D[Dedup]
-  D --> F["Sequence-length filter<br/>≤ 1024 tokens"]
-  F --> X["761,155 unique rows"]
-  X --> SP["Train · Val · Test<br/>723k · 19k · 19k"]
+### Rationale
 
-  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
-  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
-  class X,SP accent
-```
+Building a corpus from scratch was not feasible within the project timeline. Public datasets give us schema diversity and large coverage with permissive licenses.
+
+### Combined size
+
+Approximately 1.2 million rows before cleaning. Heterogeneous formats and varying quality, requiring substantial pre-processing.
 
 </div>
 
@@ -351,25 +205,37 @@ flowchart TD
 
 ---
 
-## Data · treatment
+## Phase 2 — Curation
 
-# From 1.2 million raw rows to 723k usable examples
+# Cleaning the merged corpus
 
-<div class="grid-4">
+```mermaid
+flowchart LR
+  S["10 raw sources<br/>1.2M rows"] --> U["Schema unification<br/>7-column canonical format"]
+  U --> D["Deduplication<br/>question-text hashing"]
+  D --> F["Sequence-length filter<br/>≤ 1024 tokens"]
+  F --> X["761,155 unique rows"]
+  X --> SP["Train / Val / Test split<br/>723k / 19k / 19k"]
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  class X,SP accent
+```
+
+<div class="grid-4" style="margin-top:14px">
 
 <div>
 <p class="stat-value">1.2M</p>
-<p class="stat-label">Raw rows downloaded</p>
+<p class="stat-label">Raw rows</p>
 </div>
 
 <div>
 <p class="stat-value">761k</p>
-<p class="stat-label">After dedup + schema unification</p>
+<p class="stat-label">After deduplication</p>
 </div>
 
 <div>
-<p class="stat-value">93.1%</p>
-<p class="stat-label">Survived 1024-token filter</p>
+<p class="stat-value">93%</p>
+<p class="stat-label">Pass length filter</p>
 </div>
 
 <div>
@@ -379,276 +245,302 @@ flowchart TD
 
 </div>
 
-<br>
-
-> Most ML projects spend 80% of their time on data prep.
-> This one was no different.
-
-The whole pipeline is reproducible end-to-end via UV scripts in `training/data_pipelines/`.
+All transformations reproducible via UV scripts in `training/data_pipelines/`.
 
 ---
 
-## Data · three datasets
+## Phase 3 — Task datasets
 
-# Three datasets, three specialists
+# Three datasets, one per model task
 
-<div class="grid-3">
-
-<div class="card">
-<h2 style="margin-top:0">Dataset · 01</h2>
-<h3 style="margin-top:0">text-to-sql-mix-v2</h3>
-<p class="stat-value" style="font-size:40px">761k</p>
-<p style="font-size:16px; color: var(--ink-muted)">NL → SQL pairs from 10 merged public sources</p>
-</div>
-
-<div class="card">
-<h2 style="margin-top:0">Dataset · 02</h2>
-<h3 style="margin-top:0">chart-reasoning-mix-v1</h3>
-<p class="stat-value" style="font-size:40px">75k</p>
-<p style="font-size:16px; color: var(--ink-muted)">nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)</p>
-</div>
-
-<div class="card">
-<h2 style="margin-top:0">Dataset · 03</h2>
-<h3 style="margin-top:0">svg-chart-render-v1</h3>
-<p class="stat-value" style="font-size:40px">25k</p>
-<p style="font-size:16px; color: var(--ink-muted)">nvBench charts re-rendered with matplotlib SVG backend</p>
-</div>
-
-</div>
-
-<br>
-
-**Three datasets, three roles, three models.** Curated for purpose, not scraped at scale.
-
----
-
-## Hub
-
-# Everything is open on Hugging Face
-
-| Dataset | Rows | License | Hub |
+| Dataset | Rows | Source | Hub |
 |---|---|---|---|
-| **text-to-sql-mix-v2** | 761,155 | Apache-2.0 | [huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) |
-| **chart-reasoning-mix-v1** | ~75,000 | CC-BY-4.0 | [huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) |
-| **svg-chart-render-v1** | ~25,000 | Apache-2.0 | [huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) |
+| **text-to-sql-mix-v2** | 761,155 | 10 merged public sources | [link](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) |
+| **chart-reasoning-mix-v1** | ~75,000 | nvBench (25k) + GPT-4.1-nano distillation (50k) | [link](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) |
+| **svg-chart-render-v1** | ~25,000 | nvBench charts re-rendered via matplotlib SVG | [link](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) |
 
-<br>
-
-> Open by default. Anyone can reproduce, fine-tune their own variants, or extend the mix.
+All three published openly on Hugging Face Hub under permissive licenses (Apache-2.0, CC-BY-4.0).
 
 ---
 
-## Training · why Unsloth
+## Phase 4 — Training setup
 
-# Fine-tune a 7B model on a single GPU — without paying $1,000
-
-<br>
-
-| | Vanilla `transformers` | **Unsloth QLoRA** |
-|---|---|---|
-| 7B model on 48 GB GPU | won't fit | fits in 4-bit |
-| Training speed | 1× baseline | **2× faster** |
-| Memory footprint | 1× baseline | **40% less** |
-| Output artifact | full 14 GB weights | **~160 MB adapter** |
-
-<br>
-
-**Result**: what used to need a multi-GPU cluster runs on one L40S — and we ship a tiny `.safetensors` adapter, not a 14 GB blob.
-
----
-
-## Training · the run
-
-# Training the SQL Generator
+# QLoRA via Unsloth
 
 <div class="grid-2">
 
 <div>
 
-| Setting | Value |
-|---|---|
-| Base | Qwen2.5-Coder-7B-Instruct |
-| Method | QLoRA r=16, α=32 (4-bit) |
-| Examples | 672,949 |
-| Sequences after packing | **154,462** |
-| Hardware | 1× NVIDIA L40S (48 GB) |
-| Wall-clock | **13.5 hours** |
-| Final loss | **0.2658** |
-| Total cost | **~$24** |
+We use 4-bit QLoRA with the Unsloth library for all three fine-tunes.
+
+Reasons for this choice:
+
+- Allows training a 7B model on a single 48 GB GPU
+- Approximately 2× faster than vanilla `transformers`
+- Approximately 40% lower memory consumption
+- Output is a 160 MB adapter rather than 14 GB of full weights
 
 </div>
 
 <div>
 
-```mermaid
-xychart-beta
-  title "Training loss (1 epoch)"
-  x-axis "Step" [0, 2000, 4000, 6000, 9654]
-  y-axis "Loss" 0 --> 1
-  line [0.92, 0.41, 0.32, 0.28, 0.27]
-```
-
-<br>
-
-> Smooth descent. No instabilities, no restarts.
-
-</div>
-
-</div>
-
----
-
-## Training · the trick
-
-# One config flag → 4× speedup
-
-```mermaid
-flowchart LR
-  A["723,000 examples<br/>variable length<br/>~1.7 s/step"] --> B["TRL <code>packing=True</code>"]
-  B --> C["154,462 sequences<br/>concatenated to 1024 tokens<br/>~5.0 s/step"]
-
-  D["21 hours"] -.->|same epoch, same loss| E["13.5 hours"]
-  A -.-> D
-  C -.-> E
-
-  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
-  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
-  class A,C node
-  class D,E accent
-```
-
-<br>
-
-> One line in `SFTConfig`: `packing=True`.
-> Saved 7.5 hours and ~$14 of GPU time.
-
----
-
-## Training · validation
-
-# Did it actually learn?
-
-```sql
--- Question: List all players from Tampa, Florida.
-
--- Generated:
-SELECT player FROM table_name_68
-WHERE hometown = 'Tampa, Florida';
-
--- Gold:
-SELECT player FROM table_name_68
-WHERE hometown = "tampa, florida";
-```
-
-<br>
-
-> Same query, modulo case and quotes — both DuckDB-valid.
-
-Final loss **0.2658** at 9,654 steps · single epoch · no overfitting signal.
-
----
-
-## Architecture · adapters
-
-# What "fine-tuned" actually means — we ship the diff
-
-```mermaid
-flowchart LR
-  B["Base model<br/>(public, frozen)<br/>~14 GB"]
-  L["Our LoRA adapter<br/>(trained, small)<br/>~160 MB"]
-  M["Specialist<br/>(merged at runtime)"]
-
-  B --> M
-  L --> M
-
-  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
-  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
-  class L accent
-  class M accent
-```
-
-<br>
-
-| Adapter | Base | Adapter size |
+| | Vanilla | Unsloth |
 |---|---|---|
-| [`sql-generator-qwen25-coder-7b-lora`](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora) | Qwen 2.5 Coder 7B | 161 MB |
-| [`chart-reasoner-phi3-mini-adapter-only`](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only) | Phi-3 Mini 4k | 38 MB |
-| [`svg-renderer-deepseek-coder-1.3b-lora`](https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora) | DeepSeek Coder 1.3B | 22 MB |
+| 7B on 48 GB GPU | does not fit | fits in 4-bit |
+| Speed | baseline | ~2× faster |
+| Memory | baseline | ~40% less |
+| Output artifact | 14 GB | 160 MB adapter |
+
+</div>
+
+</div>
 
 ---
 
-## Architecture · how the app runs
+## Phase 4 — Three fine-tunes (1 of 3)
 
-# Per query: 4 LLM calls, 5–8 seconds end-to-end
+# Model 01 · SQL Generator
+
+<div class="grid-2">
+
+<div class="card card-accent">
+
+<p class="card-title">Model 01</p>
+
+### SQL Generator
+
+**Function**
+Translates a natural-language question + schema into a valid SQL query.
+
+**Base model**
+Qwen 2.5 Coder 7B Instruct
+
+**Training dataset**
+[`text-to-sql-mix-v2`](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) — 672,949 examples used (after seq-len filter)
+
+**Training method**
+QLoRA r=16, α=32, 4-bit base · TRL `packing=True` (154,462 packed sequences) · 1 epoch · 9,654 steps
+
+**Hardware**
+1× NVIDIA L40S (48 GB) on Hugging Face Jobs
+
+</div>
+
+<div class="card">
+
+<div class="grid-2" style="gap:14px">
+
+<div>
+<p class="stat-value">13.5h</p>
+<p class="stat-label">Wall-clock time</p>
+</div>
+
+<div>
+<p class="stat-value">0.27</p>
+<p class="stat-label">Final loss</p>
+</div>
+
+<div>
+<p class="stat-value">~$24</p>
+<p class="stat-label">Compute cost</p>
+</div>
+
+<div>
+<p class="stat-value">161 MB</p>
+<p class="stat-label">Adapter size</p>
+</div>
+
+</div>
+
+<br>
+
+**Hub**
+[`sql-generator-qwen25-coder-7b-lora`](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora)
+
+> Sequence packing reduced training time from ~21 h to 13.5 h.
+
+</div>
+
+</div>
+
+---
+
+## Phase 4 — Three fine-tunes (2 of 3)
+
+# Model 02 · Chart Reasoner
+
+<div class="grid-2">
+
+<div class="card card-accent">
+
+<p class="card-title">Model 02</p>
+
+### Chart Reasoner
+
+**Function**
+Given a question and SQL result rows, decides the chart type and which columns to plot.
+
+**Base model**
+Microsoft Phi-3 Mini 4k Instruct
+
+**Training dataset**
+[`chart-reasoning-mix-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) — ~75k pairs (25k nvBench + 50k GPT-4.1-nano knowledge distillation)
+
+**Training method**
+QLoRA r=16, α=32, 4-bit base · 1 epoch · structured-JSON output objective
+
+**Hardware**
+HF Jobs A10G / Colab Pro
+
+</div>
+
+<div class="card">
+
+<div class="grid-2" style="gap:14px">
+
+<div>
+<p class="stat-value">~3h</p>
+<p class="stat-label">Wall-clock time</p>
+</div>
+
+<div>
+<p class="stat-value">~0.31</p>
+<p class="stat-label">Final loss</p>
+</div>
+
+<div>
+<p class="stat-value">~$3</p>
+<p class="stat-label">Compute cost</p>
+</div>
+
+<div>
+<p class="stat-value">38 MB</p>
+<p class="stat-label">Adapter size</p>
+</div>
+
+</div>
+
+<br>
+
+**Hub**
+[`chart-reasoner-phi3-mini-adapter-only`](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only)
+
+> Outputs a JSON spec with chart_type, x_column, y_column, title, color, rationale.
+
+</div>
+
+</div>
+
+---
+
+## Phase 4 — Three fine-tunes (3 of 3)
+
+# Model 03 · SVG Renderer
+
+<div class="grid-2">
+
+<div class="card card-accent">
+
+<p class="card-title">Model 03</p>
+
+### SVG Renderer
+
+**Function**
+Given a chart spec and data, produces inline SVG markup for the visualization.
+
+**Base model**
+DeepSeek Coder 1.3B Instruct
+
+**Training dataset**
+[`svg-chart-render-v1`](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) — ~25k chart-spec → SVG pairs from nvBench charts re-rendered via matplotlib
+
+**Training method**
+QLoRA r=16, α=32, 4-bit base · 1 epoch · code-generation objective
+
+**Hardware**
+Colab T4
+
+</div>
+
+<div class="card">
+
+<div class="grid-2" style="gap:14px">
+
+<div>
+<p class="stat-value">~2h</p>
+<p class="stat-label">Wall-clock time</p>
+</div>
+
+<div>
+<p class="stat-value">~0.40</p>
+<p class="stat-label">Final loss</p>
+</div>
+
+<div>
+<p class="stat-value">~$1</p>
+<p class="stat-label">Compute cost</p>
+</div>
+
+<div>
+<p class="stat-value">22 MB</p>
+<p class="stat-label">Adapter size</p>
+</div>
+
+</div>
+
+<br>
+
+**Hub**
+[`svg-renderer-deepseek-coder-1.3b-lora`](https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora)
+
+> When the model output fails SVG validation, the system falls back to a themed Plotly renderer.
+
+</div>
+
+</div>
+
+---
+
+## Phase 5 — System architecture
+
+# End-to-end query flow
 
 ```mermaid
 flowchart LR
   subgraph IN["User input"]
     U1["CSV / JSON / Parquet"]
-    U2["NL question"]
+    U2["Question (NL)"]
   end
-
   SX["Schema extractor"] --> DB[("DuckDB<br/>in-memory")]
   U1 --> SX
-
   ORCH{{"Orchestrator"}}
   U2 --> ORCH
   DB --> ORCH
-
   ORCH --> M1["SQL Generator<br/>Qwen + LoRA"]
   M1 -->|SQL| DB
   DB -->|results| M2["Chart Reasoner<br/>Phi-3 + LoRA"]
   M2 -->|chart spec| M3["SVG Renderer<br/>DeepSeek + LoRA"]
-  M3 --> OUT["Chart + narration<br/>+ downloads"]
-
+  M3 --> NARR["Narrator<br/>Qwen reused"]
+  NARR --> OUT["Chart + finding<br/>+ downloads"]
   classDef in fill:#FAFAF9,stroke:#5A5A5A,color:#0E0E0E
   classDef model fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   classDef orch fill:#0E0E0E,stroke:#0E0E0E,color:#FFFFFF
   classDef out fill:#C96442,stroke:#0E0E0E,color:#FFFFFF
   classDef db fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
   class U1,U2 in
-  class M1,M2,M3 model
+  class M1,M2,M3,NARR model
   class ORCH orch
   class OUT out
   class DB db
 ```
 
-All three adapters loaded **once at module level** into a half-H200 via ZeroGPU.
+End-to-end latency: 5–8 seconds on a warm GPU. Adapters loaded once at module level on a half-H200 via Hugging Face ZeroGPU. Self-correcting SQL: failed queries retried up to 3× with the error in context.
 
 ---
 
-## Engineering · what we learned
+## Phase 6 — Deployment and cost
 
-<div class="grid-2">
-
-<div>
-
-> **ZeroGPU pattern**
-> Load models on `cuda` at **module level**, not lazily inside `@spaces.GPU`. Lazy loading was burning 30–60 s of quota per query.
-
-> **PEFT explicit**
-> Apply LoRA via `PeftModel.from_pretrained(base, adapter)`. Auto-detect triggered a base/adapter rank mismatch.
-
-</div>
-
-<div>
-
-> **DuckDB > SQLite**
-> Native CSV/JSON/Parquet ingestion, ANSI SQL, 10× faster on analytics workloads.
-
-> **Self-correction loop**
-> If SQL fails, retry up to 3× with the error fed back to the model. Took accuracy from ~80% to ~95% — free.
-
-</div>
-
-</div>
-
----
-
-## Cost summary
-
-# What it actually cost to build
+# Total compute cost: approximately $30
 
 <div class="grid-2">
 
@@ -656,26 +548,23 @@ All three adapters loaded **once at module level** into a half-H200 via ZeroGPU.
 
 | Stage | Compute | Cost |
 |---|---|---|
-| SQL Generator training | HF Jobs L40S, 13.5 h | **~$24** |
+| SQL Generator training | HF Jobs L40S, 13.5 h | ~$24 |
 | Chart Reasoner training | Colab / HF Jobs | ~$3 |
 | SVG Renderer training | Colab / HF Jobs | ~$1 |
-| Chart dataset GPT distillation | gpt-4.1-nano Batch | ~$2.50 |
-| **Inference hosting** | HF Spaces ZeroGPU | **$0** |
-| | | |
+| GPT-4.1-nano dataset distillation | OpenAI Batch API | ~$2.50 |
+| Inference hosting | HF Spaces ZeroGPU | $0 |
 | **Total** | | **~$30** |
 
 </div>
 
 <div>
 
-<p class="stat-value">$30</p>
-<p class="stat-label">All-in to train three production fine-tunes</p>
+### Why the cost is low
 
-<br>
-
-> Less than dinner.
-> Less than one OpenAI eval run.
-> Open weights, reproducible, on Hugging Face.
+- Unsloth QLoRA reduces training memory and time
+- Sequence packing further reduces SQL training time
+- HF Spaces ZeroGPU provides free on-demand GPU for inference
+- Only adapters are stored, not full model weights
 
 </div>
 
@@ -683,9 +572,9 @@ All three adapters loaded **once at module level** into a half-H200 via ZeroGPU.
 
 ---
 
-<!-- _class: lead no-mark -->
+<!-- _class: lead -->
 
-# Demo
+# Live system demo
 
 <br>
 
@@ -693,49 +582,42 @@ All three adapters loaded **once at module level** into a half-H200 via ZeroGPU.
 
 <br>
 
-<div style="font-size:18px; color: var(--ink-muted); max-width: 760px;">
-
-Drop a CSV → ask a question → get SQL, a chart, an analyst-style finding, and download buttons. All powered by three fine-tuned LoRAs running on a half-H200.
-
-</div>
+Upload a CSV, ask a question in English. The system returns the generated SQL, query results, a chart, and a one to two sentence written finding.
 
 ---
 
-## Closing
+## Conclusion
 
-# Three fine-tunes. Thirty dollars. Thirteen and a half hours.
+# Summary and future work
 
 <div class="grid-2">
 
 <div>
 
-**Open source:**
+### What we delivered
 
-- Repo · [github.com/DanielRegaladoUMiami/sql-agent-llmops](https://github.com/DanielRegaladoUMiami/sql-agent-llmops)
-- Space · [hf.co/spaces/DanielRegaladoCardoso/sql-agent](https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent)
-- 3 LoRAs on Hugging Face Hub
-- 3 datasets, fully reproducible
+- Three open-source datasets on Hugging Face
+- Three QLoRA adapters trained on those datasets
+- A working multi-model agent that answers questions about uploaded data
+- Total compute cost approximately $30
 
 </div>
 
 <div>
 
-**Where it goes next:**
+### Limitations and future work
 
-- Multi-turn conversation memory
-- Eval harness on Spider / WikiSQL / BIRD
-- Anomaly detection at upload
-- Statistical summary at ingest
+- Quantitative evaluation on Spider, WikiSQL, BIRD
+- Multi-turn conversational memory
+- Anomaly detection on uploaded data
+- Statistical summary at ingestion
+
+</div>
 
 </div>
 
-</div>
+**Repository:** [github.com/DanielRegaladoUMiami/sql-agent-llmops](https://github.com/DanielRegaladoUMiami/sql-agent-llmops)
 
 <br>
-<br>
 
-<div style="text-align:center; font-size:18px; color: var(--ink-muted)">
-
-Thank you.
-
-</div>
+Daniel Regalado Cardoso · Nefeli Zafeiri · Oliver Mazariegos · Eleniz Espina
