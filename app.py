@@ -105,8 +105,8 @@ gradio-app > .main, gradio-app .gradio-container {
 /* Two-column rectangular layout */
 .split-layout {
   display: grid;
-  grid-template-columns: minmax(360px, 440px) 1fr;
-  gap: 32px;
+  grid-template-columns: minmax(480px, 580px) 1fr;
+  gap: 36px;
   align-items: stretch;
   min-height: 720px;
 }
@@ -642,13 +642,21 @@ details > *:not(summary) { padding: 0 14px 14px; }
   line-height: 1;
 }
 
-/* Schema preview after upload */
+/* Schema preview after upload — capped height so it doesn't push
+   the question off screen on wide schemas */
 .schema-preview {
   margin: 14px 0;
   padding: 14px 16px;
   background: var(--surface-raised);
   border: 1px solid var(--ink-faint);
   border-radius: var(--radius-sm);
+  max-height: 220px;
+  overflow-y: auto;
+}
+.schema-preview::-webkit-scrollbar { width: 6px; }
+.schema-preview::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border-radius: 3px;
 }
 .schema-preview-header {
   font-size: 12px;
