@@ -25,6 +25,10 @@ FONT_FAMILY = (
     '"Helvetica Neue", Arial, sans-serif'
 )
 
+# Variant with single quotes for use INSIDE style="..." attributes — double
+# quotes inside double-quoted attributes break XML parsing on download.
+FONT_FAMILY_SINGLE = FONT_FAMILY.replace('"', "'")
+
 
 def is_renderable_svg(svg: str) -> bool:
     """Cheap structural validity check — does this look like a real SVG with content?"""
@@ -89,31 +93,57 @@ def _ensure_viewbox(svg: str) -> str:
 
 
 def _ensure_responsive(svg: str) -> str:
-    """Strip explicit width/height so the SVG fills its container responsively."""
+    """Strip explicit width/height so the SVG fills its container responsively.
+    Adds preserveAspectRatio and style only if not already present, and merges
+    style values to avoid duplicate style attributes (which break XML parse)."""
+    # Drop explicit width/height
     svg = re.sub(r'\s(width|height)="[^"]*"', "", svg, flags=re.IGNORECASE, count=2)
+
     if "preserveAspectRatio" not in svg:
         svg = re.sub(
             r"<svg",
-            '<svg preserveAspectRatio="xMidYMid meet" '
-            'style="width:100%;height:auto;display:block"',
+            '<svg preserveAspectRatio="xMidYMid meet"',
             svg,
             count=1,
             flags=re.IGNORECASE,
+        )
+
+    # Merge style: if existing style="" or style="..." present, append; else add
+    style_value = "width:100%;height:auto;display:block"
+    if re.search(r'<svg[^>]*\sstyle\s*=', svg, re.IGNORECASE):
+        # Already has a style attr — merge our values into it
+        def _merge(m):
+            existing = m.group(2).strip().rstrip(";")
+            merged = (existing + ";" if existing else "") + style_value
+            return f'{m.group(1)}style="{merged}"'
+        svg = re.sub(
+            r'(<svg[^>]*\s)style\s*=\s*"([^"]*)"',
+            _merge, svg, count=1, flags=re.IGNORECASE,
+        )
+    else:
+        svg = re.sub(
+            r"<svg",
+            f'<svg style="{style_value}"',
+            svg, count=1, flags=re.IGNORECASE,
         )
     return svg
 
 
 def _normalize_fonts(svg: str) -> str:
-    """Force the system font stack on all text."""
+    """Force the system font stack on all text. Use the single-quote variant
+    when injecting INTO a style="..." attribute, double-quote when standalone."""
+    # Standalone font-family attribute: font-family="..."
     svg = re.sub(
         r'font-family\s*=\s*"[^"]*"',
         f'font-family="{FONT_FAMILY}"',
         svg,
         flags=re.IGNORECASE,
     )
+    # Inline in style attribute: font-family:... — must use single quotes
+    # so we don't break the surrounding double-quoted style attribute
     svg = re.sub(
         r"font-family\s*:\s*[^;\"']+",
-        f"font-family:{FONT_FAMILY}",
+        f"font-family:{FONT_FAMILY_SINGLE}",
         svg,
         flags=re.IGNORECASE,
     )
@@ -145,54 +175,30 @@ def _wrap_with_theme(svg: str) -> str:
 
 
 def to_standalone_svg(svg: str) -> str:
-    """Make the SVG self-contained for download:
-    - Add XML namespace declarations
-    - Ensure xmlns:xlink for href attributes
-    - Add explicit white background for visibility outside the app
-    - Add explicit width/height for file viewers that ignore viewBox
+    """Minimal hardening for downloaded SVG:
+    - Ensure XML namespace declarations are present
+    - Add XML prolog
+    - Do NOT touch existing attributes / dimensions / inner content
+      (heavier post-processing was breaking the XML for some Plotly outputs)
     """
     if not svg or "<svg" not in svg:
         return svg
 
-    out = svg
+    out = svg.strip()
 
-    # Add XML namespace if missing
-    if "xmlns=" not in out:
+    # Add xmlns if missing — this is the only requirement for standalone files
+    if "xmlns=" not in out[:200]:
         out = re.sub(
-            r"<svg",
+            r"<svg(?![^>]*xmlns=)",
             '<svg xmlns="http://www.w3.org/2000/svg"',
             out, count=1, flags=re.IGNORECASE,
         )
-    if "xmlns:xlink=" not in out:
+    if "xmlns:xlink=" not in out[:300]:
         out = re.sub(
-            r"<svg",
+            r"<svg(?![^>]*xmlns:xlink=)",
             '<svg xmlns:xlink="http://www.w3.org/1999/xlink"',
             out, count=1, flags=re.IGNORECASE,
         )
-
-    # Pull viewBox dims for width/height fallback
-    vb = re.search(r'viewBox\s*=\s*"([\d.\s\-]+)"', out)
-    if vb:
-        parts = vb.group(1).split()
-        if len(parts) == 4:
-            w, h = parts[2], parts[3]
-            # Replace any existing width/height with explicit pixel values
-            out = re.sub(r'\s(width|height)="[^"]*"', "", out, flags=re.IGNORECASE)
-            out = re.sub(
-                r"<svg",
-                f'<svg width="{w}" height="{h}"',
-                out, count=1, flags=re.IGNORECASE,
-            )
-
-    # Drop the responsive style so file viewers get fixed dims
-    out = re.sub(r'\sstyle="width:100%[^"]*"', "", out, flags=re.IGNORECASE)
-
-    # Add explicit white background rect at start (for opaque export)
-    out = re.sub(
-        r"(<svg[^>]*>)",
-        r'\1<rect width="100%" height="100%" fill="#FAFAF9"/>',
-        out, count=1, flags=re.IGNORECASE,
-    )
 
     # XML prolog
     if not out.startswith("<?xml"):
