@@ -65,16 +65,26 @@ class SVGRenderer:
             self.tokenizer = None
 
     def generate(self, chart_spec: Dict[str, Any], data: List[Dict[str, Any]]) -> str:
+        """Plotly first (reliable, consistent theming), trained model as fallback."""
+        try:
+            svg = self._plotly.render(chart_spec, data)
+            if is_renderable_svg(svg):
+                return apply_theme(svg)
+            logger.info("Plotly returned non-SVG; trying model")
+        except Exception as e:
+            logger.warning(f"Plotly render failed ({e}); trying model")
+
         if self.model is not None and self.tokenizer is not None:
             try:
                 svg = self._generate_model(chart_spec, data)
                 if is_renderable_svg(svg):
                     return apply_theme(svg)
-                logger.info("Model SVG failed validation; using Plotly fallback")
             except Exception as e:
-                logger.warning(f"Model SVG generation error: {e}; falling back")
+                logger.warning(f"Model SVG generation error: {e}")
 
-        svg = self._plotly.render(chart_spec, data)
+        # Last resort: native Python SVG (always produces something)
+        from src.visualization.plotly_fallback import PlotlyRenderer
+        svg = self._plotly._empty("Could not render chart; see Data section.")
         return apply_theme(svg)
 
     def _generate_model(self, chart_spec: Dict[str, Any], data: List[Dict[str, Any]]) -> str:

@@ -132,10 +132,8 @@ def _normalize_strokes(svg: str) -> str:
 
 
 def _wrap_with_theme(svg: str) -> str:
-    """
-    Inject a <style> block scoped to the SVG that sets default colors using
-    CSS variables that the host document can override (light/dark themes).
-    """
+    """Inject a <style> block scoped to the SVG with explicit hex colors.
+    These work both in-app and as a standalone downloaded file."""
     style = f"""<style>
       .chart-bg {{ fill: transparent; }}
       .chart-ink, text {{ fill: {INK}; font-family: {FONT_FAMILY}; }}
@@ -144,6 +142,63 @@ def _wrap_with_theme(svg: str) -> str:
       .chart-accent {{ fill: {ACCENT}; stroke: {ACCENT}; }}
     </style>"""
     return re.sub(r"(<svg[^>]*>)", r"\1" + style, svg, count=1, flags=re.IGNORECASE)
+
+
+def to_standalone_svg(svg: str) -> str:
+    """Make the SVG self-contained for download:
+    - Add XML namespace declarations
+    - Ensure xmlns:xlink for href attributes
+    - Add explicit white background for visibility outside the app
+    - Add explicit width/height for file viewers that ignore viewBox
+    """
+    if not svg or "<svg" not in svg:
+        return svg
+
+    out = svg
+
+    # Add XML namespace if missing
+    if "xmlns=" not in out:
+        out = re.sub(
+            r"<svg",
+            '<svg xmlns="http://www.w3.org/2000/svg"',
+            out, count=1, flags=re.IGNORECASE,
+        )
+    if "xmlns:xlink=" not in out:
+        out = re.sub(
+            r"<svg",
+            '<svg xmlns:xlink="http://www.w3.org/1999/xlink"',
+            out, count=1, flags=re.IGNORECASE,
+        )
+
+    # Pull viewBox dims for width/height fallback
+    vb = re.search(r'viewBox\s*=\s*"([\d.\s\-]+)"', out)
+    if vb:
+        parts = vb.group(1).split()
+        if len(parts) == 4:
+            w, h = parts[2], parts[3]
+            # Replace any existing width/height with explicit pixel values
+            out = re.sub(r'\s(width|height)="[^"]*"', "", out, flags=re.IGNORECASE)
+            out = re.sub(
+                r"<svg",
+                f'<svg width="{w}" height="{h}"',
+                out, count=1, flags=re.IGNORECASE,
+            )
+
+    # Drop the responsive style so file viewers get fixed dims
+    out = re.sub(r'\sstyle="width:100%[^"]*"', "", out, flags=re.IGNORECASE)
+
+    # Add explicit white background rect at start (for opaque export)
+    out = re.sub(
+        r"(<svg[^>]*>)",
+        r'\1<rect width="100%" height="100%" fill="#FAFAF9"/>',
+        out, count=1, flags=re.IGNORECASE,
+    )
+
+    # XML prolog
+    if not out.startswith("<?xml"):
+        out = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' + out
+
+    return out
 
 
 def _attr(svg: str, name: str) -> str | None:

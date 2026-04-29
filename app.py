@@ -581,9 +581,11 @@ def _download_links_html(sql: str, results: list[dict], svg: str) -> str:
             f'<span class="icon">↓</span> CSV ({len(results):,} rows)</a>'
         )
 
-    # SVG download
+    # SVG download (standalone version: explicit dims, white bg, XML prolog)
     if svg and "<svg" in svg.lower():
-        svg_b64 = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+        from src.visualization.svg_theme import to_standalone_svg
+        standalone = to_standalone_svg(svg)
+        svg_b64 = base64.b64encode(standalone.encode("utf-8")).decode("ascii")
         parts.append(
             f'<a class="download-link" '
             f'href="data:image/svg+xml;base64,{svg_b64}" '
