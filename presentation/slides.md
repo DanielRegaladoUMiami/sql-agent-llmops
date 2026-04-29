@@ -6,18 +6,17 @@ paginate: true
 backgroundColor: "#FAFAF9"
 color: "#0E0E0E"
 header: ""
-footer: "SQL Agent · Daniel Regalado · UMiami MSBA"
+footer: "SQL Agent LLMOps · Daniel Regalado · MSBA UMiami"
 style: |
-  /* Apple × Deloitte aesthetic */
+  /* Match the actual project's design system — same as the live app & README */
   :root {
     --ink: #0E0E0E;
     --ink-muted: #5A5A5A;
     --ink-faint: #E5E5E5;
     --surface: #FAFAF9;
     --surface-raised: #FFFFFF;
-    --accent: #86BC25;       /* Deloitte signature green */
-    --accent-soft: rgba(134, 188, 37, 0.08);
-    --warm: #C96442;         /* Warm complement */
+    --accent: #C96442;          /* Warm amber — project signature */
+    --accent-soft: rgba(201, 100, 66, 0.08);
     --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
             "Helvetica Neue", "Inter", Arial, sans-serif;
     --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -27,215 +26,220 @@ style: |
     font-family: var(--font);
     background: var(--surface);
     color: var(--ink);
-    padding: 64px 80px;
-    letter-spacing: -0.01em;
-    font-size: 24px;
+    padding: 56px 72px;
+    letter-spacing: -0.005em;
+    font-size: 22px;
     line-height: 1.5;
     justify-content: flex-start;
   }
 
-  section.lead { justify-content: center; text-align: center; }
+  /* Title slide */
+  section.lead { justify-content: center; text-align: left; padding-left: 96px; }
   section.lead h1 {
-    font-size: 64px;
+    font-size: 56px;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
     line-height: 1.05;
-    margin: 0 0 24px;
+    margin: 0 0 12px;
   }
   section.lead h2 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 400;
     color: var(--ink-muted);
     letter-spacing: 0;
-    margin: 0;
+    margin: 0 0 32px;
+    text-transform: none;
+  }
+  section.lead .meta {
+    font-size: 16px;
+    color: var(--ink-muted);
+    border-top: 1px solid var(--ink-faint);
+    padding-top: 16px;
+    max-width: 360px;
   }
 
-  h1 {
-    font-size: 42px;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    margin: 0 0 36px;
-    line-height: 1.1;
-  }
+  /* Section labels (mimics README "🤗 Models on..." style) */
   h2 {
-    font-size: 18px;
+    font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--accent);
-    margin: 0 0 12px;
+    margin: 0 0 8px;
   }
+
+  h1 {
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 28px;
+    line-height: 1.15;
+    color: var(--ink);
+  }
+
   h3 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 500;
     color: var(--ink);
-    margin: 24px 0 12px;
+    margin: 18px 0 8px;
   }
-  p, li { font-size: 22px; color: var(--ink); line-height: 1.55; }
+
+  p, li {
+    font-size: 20px;
+    color: var(--ink);
+    line-height: 1.55;
+  }
   strong { font-weight: 600; color: var(--ink); }
   em { color: var(--ink-muted); font-style: normal; }
+
+  /* Code (matches README inline code) */
   code {
     font-family: var(--font-mono);
-    font-size: 19px;
-    background: var(--accent-soft);
+    font-size: 17px;
+    background: var(--surface-raised);
     color: var(--ink);
     padding: 2px 8px;
     border-radius: 4px;
+    border: 1px solid var(--ink-faint);
   }
   pre {
     background: var(--surface-raised);
     border: 1px solid var(--ink-faint);
-    border-radius: 12px;
-    padding: 18px 22px;
-    font-size: 18px;
-    line-height: 1.5;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 17px;
+    line-height: 1.55;
+    overflow-x: auto;
   }
+  pre code { background: transparent; border: none; padding: 0; font-size: 17px; }
 
-  /* Stat blocks */
-  .stat { display: flex; flex-direction: column; gap: 4px; }
-  .stat-value { font-size: 56px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: var(--ink); }
-  .stat-label { font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
-
-  /* Grids */
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-
-  /* Cards */
-  .card {
-    background: var(--surface-raised);
-    border: 1px solid var(--ink-faint);
-    border-radius: 14px;
-    padding: 22px 24px;
-  }
-  .card-accent { border-left: 3px solid var(--accent); padding-left: 22px; background: transparent; border-top: none; border-right: none; border-bottom: none; border-radius: 0; }
-  .card-title { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 8px; }
-
-  /* Quote */
-  blockquote {
-    border: none;
-    border-left: 3px solid var(--accent);
-    padding: 4px 0 4px 24px;
-    margin: 24px 0;
-    font-size: 28px;
-    color: var(--ink);
-    font-weight: 400;
-    line-height: 1.3;
-  }
-
-  /* Tables */
+  /* Tables — match README minimalist style */
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 18px;
-    margin: 12px 0;
+    margin: 8px 0;
   }
   th {
     text-align: left;
     font-weight: 600;
     color: var(--ink);
     padding: 10px 12px;
-    border-bottom: 2px solid var(--ink);
+    border-bottom: 1.5px solid var(--ink);
     font-size: 14px;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
   }
   td {
-    padding: 10px 12px;
+    padding: 9px 12px;
     color: var(--ink-muted);
     border-bottom: 1px solid var(--ink-faint);
     vertical-align: top;
   }
   td strong { color: var(--ink); }
 
-  /* Mermaid sizing */
-  .mermaid svg { max-width: 100% !important; height: auto !important; }
+  /* Block quotes — match README narrator style (amber left border) */
+  blockquote {
+    border: none;
+    border-left: 2px solid var(--accent);
+    padding: 6px 0 6px 22px;
+    margin: 22px 0;
+    font-size: 22px;
+    color: var(--ink);
+    font-weight: 400;
+    line-height: 1.4;
+  }
 
-  /* Footer styling */
-  footer { color: var(--ink-muted); font-size: 12px; }
-  section::after { color: var(--ink-muted); font-size: 12px; }
+  /* Stats */
+  .stat-value {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .stat-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+    margin-top: 6px;
+  }
 
-  /* Lead title page */
-  section.title-page::before {
+  /* Layout grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: start; }
+
+  /* Cards — same as README chips */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid var(--ink-faint);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+
+  /* Section accent line on slide top-left (matches README YAML feel) */
+  section::before {
     content: "";
     position: absolute;
-    top: 64px; left: 80px;
-    width: 32px; height: 4px;
+    top: 32px;
+    left: 72px;
+    width: 24px;
+    height: 3px;
     background: var(--accent);
+    border-radius: 2px;
   }
+  section.lead::before { left: 96px; top: 96px; }
+  section.no-mark::before { display: none; }
+
+  /* Footer + page number */
+  footer { color: var(--ink-muted); font-size: 11px; }
+  section::after {
+    color: var(--ink-muted);
+    font-size: 11px;
+    bottom: 24px;
+    right: 32px;
+  }
+
+  /* Mermaid responsive */
+  .mermaid svg { max-width: 100% !important; height: auto !important; }
+  svg[id^="mermaid"] { max-width: 100% !important; height: auto !important; }
 ---
 
-<!-- _class: lead title-page -->
+<!-- _class: lead -->
 <!-- _paginate: false -->
 <!-- _footer: "" -->
 
 # SQL Agent
 ## Multi-Model LLMOps for Text-to-SQL
 
-<br>
+<div class="meta">
 
 **Daniel Regalado Cardoso**
 MSBA · University of Miami · 2026
 
----
+</div>
 
-<!-- _header: "Agenda" -->
+---
 
 ## Today
 
-# What we'll walk through
+# Agenda
 
-<div class="grid-3">
-
-<div class="card">
-<div class="card-title">01 · Why</div>
-
-The problem we set out to solve.
-
-</div>
-
-<div class="card">
-<div class="card-title">02 · Data</div>
-
-Sourcing, curating, and treating real text-to-SQL data.
-
-</div>
-
-<div class="card">
-<div class="card-title">03 · Hub</div>
-
-Publishing three datasets to Hugging Face.
-
-</div>
-
-<div class="card">
-<div class="card-title">04 · Training</div>
-
-Three fine-tuned LoRAs with Unsloth + QLoRA.
-
-</div>
-
-<div class="card">
-<div class="card-title">05 · Architecture</div>
-
-How the agent orchestrates all three.
-
-</div>
-
-<div class="card">
-<div class="card-title">06 · Demo</div>
-
-Live, on Hugging Face Spaces.
-
-</div>
-
-</div>
+| Step | What we cover |
+|---|---|
+| 01 · **Why** | The problem we set out to solve |
+| 02 · **Data** | Sourcing 10 public datasets, treating, splitting |
+| 03 · **Hub** | Publishing three datasets to Hugging Face |
+| 04 · **Training** | Three QLoRA fine-tunes with Unsloth |
+| 05 · **Architecture** | How the agent orchestrates them |
+| 06 · **Demo** | Live, on Hugging Face Spaces |
 
 ---
 
-<!-- _header: "Why" -->
-
-## Why we built it
+## Why
 
 # Most data is locked behind SQL
 
@@ -243,10 +247,10 @@ Live, on Hugging Face Spaces.
 
 <div>
 
-A typical analyst opens a spreadsheet, freezes on the question, and either:
+A typical analyst opens a CSV, freezes on the question, and either:
 
-- Asks the data team and waits 3 days, or
-- Gives up and looks at the file blind.
+- Asks the data team and waits 3 days
+- Or gives up and looks at the file blind
 
 > Writing SQL is friction. Asking a question is not.
 
@@ -256,24 +260,18 @@ The bet: **let the model write the SQL.**
 
 <div>
 
-<div class="stat">
-<div class="stat-value">1.8M</div>
-<div class="stat-label">rows in a sample CSV</div>
-</div>
+<p class="stat-value">1.8M</p>
+<p class="stat-label">rows in a sample CSV</p>
 
 <br>
 
-<div class="stat">
-<div class="stat-value">14</div>
-<div class="stat-label">columns</div>
-</div>
+<p class="stat-value">14</p>
+<p class="stat-label">columns</p>
 
 <br>
 
-<div class="stat">
-<div class="stat-value">~0</div>
-<div class="stat-label">questions answered without SQL</div>
-</div>
+<p class="stat-value">~0</p>
+<p class="stat-label">questions answered without SQL</p>
 
 </div>
 
@@ -281,28 +279,26 @@ The bet: **let the model write the SQL.**
 
 ---
 
-<!-- _header: "The thesis" -->
+## The thesis
 
-## What we're betting on
-
-# One specialist per task, not one giant model
-
-<br>
+# One specialist per task — not one giant model
 
 ```mermaid
 flowchart LR
   Q["Question in English"]
-  A["SQL specialist<br/>Qwen 7B + LoRA"]
-  B["Chart specialist<br/>Phi-3 + LoRA"]
-  C["SVG specialist<br/>DeepSeek + LoRA"]
+  A["SQL specialist<br/>Qwen 2.5 Coder 7B"]
+  B["Chart specialist<br/>Phi-3 Mini 3.8B"]
+  C["SVG specialist<br/>DeepSeek 1.3B"]
   R["Chart + insight"]
 
   Q --> A --> B --> C --> R
 
-  classDef node fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
-  classDef accent fill:#86BC25,stroke:#0E0E0E,color:#FFFFFF
-  class Q,R accent
-  class A,B,C node
+  classDef in fill:#FAFAF9,stroke:#5A5A5A,color:#0E0E0E
+  classDef model fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
+  classDef out fill:#C96442,stroke:#0E0E0E,color:#FFFFFF
+  class Q in
+  class A,B,C model
+  class R out
 ```
 
 <br>
@@ -311,19 +307,15 @@ flowchart LR
 
 ---
 
-<!-- _header: "Data · sourcing" -->
+## Data · sourcing
 
-## Data — where it came from
-
-# We didn't reinvent. We curated.
-
-<br>
+# We didn't reinvent — we curated
 
 <div class="grid-2">
 
 <div>
 
-Ten public text-to-SQL datasets, merged into one:
+Ten public text-to-SQL datasets, merged into one canonical training set:
 
 - `b-mc2/sql-create-context`
 - `gretelai/synthetic_text_to_sql`
@@ -342,14 +334,14 @@ Ten public text-to-SQL datasets, merged into one:
 
 ```mermaid
 flowchart TD
-  S1[10 raw sources<br/>~1.2M rows] --> U[Schema unification]
+  S1["10 raw sources<br/>~1.2M rows"] --> U[Schema unification]
   U --> D[Dedup]
-  D --> F["Sequence-length filter<br/>(≤1024 tokens)"]
-  F --> X[761,155 unique rows]
-  X --> SP["Train / Val / Test<br/>723k / 19k / 19k"]
+  D --> F["Sequence-length filter<br/>≤ 1024 tokens"]
+  F --> X["761,155 unique rows"]
+  X --> SP["Train · Val · Test<br/>723k · 19k · 19k"]
 
-  classDef node fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
-  classDef accent fill:#86BC25,stroke:#0E0E0E,color:#FFFFFF
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   class X,SP accent
 ```
 
@@ -359,83 +351,68 @@ flowchart TD
 
 ---
 
-<!-- _header: "Data · treatment" -->
+## Data · treatment
 
-## How we cleaned it
-
-# From 1.2M raw rows to 723k usable training examples
-
-<br>
+# From 1.2 million raw rows to 723k usable examples
 
 <div class="grid-4">
 
-<div class="stat">
-<div class="stat-value">1.2M</div>
-<div class="stat-label">Raw rows downloaded</div>
+<div>
+<p class="stat-value">1.2M</p>
+<p class="stat-label">Raw rows downloaded</p>
 </div>
 
-<div class="stat">
-<div class="stat-value">761k</div>
-<div class="stat-label">After dedup + schema unification</div>
+<div>
+<p class="stat-value">761k</p>
+<p class="stat-label">After dedup + schema unification</p>
 </div>
 
-<div class="stat">
-<div class="stat-value">93.1%</div>
-<div class="stat-label">Survived 1024-token filter</div>
+<div>
+<p class="stat-value">93.1%</p>
+<p class="stat-label">Survived 1024-token filter</p>
 </div>
 
-<div class="stat">
-<div class="stat-value">723k</div>
-<div class="stat-label">Final training set</div>
+<div>
+<p class="stat-value">723k</p>
+<p class="stat-label">Final training set</p>
 </div>
 
 </div>
 
-<br>
 <br>
 
 > Most ML projects spend 80% of their time on data prep.
 > This one was no different.
 
-<br>
-
-Pipeline is reproducible end-to-end via UV scripts in `training/data_pipelines/`.
+The whole pipeline is reproducible end-to-end via UV scripts in `training/data_pipelines/`.
 
 ---
 
-<!-- _header: "Data · three datasets" -->
+## Data · three datasets
 
-## We built three datasets — one per specialist
-
-<br>
+# Three datasets, three specialists
 
 <div class="grid-3">
 
-<div class="card-accent">
-<div class="card-title">SQL Training</div>
-<div class="stat-value">761k</div>
-<p style="font-size:18px; color: var(--ink-muted); margin-top:12px">
-<strong>text-to-sql-mix-v2</strong><br>
-NL → SQL pairs from 10 merged sources
-</p>
+<div class="card">
+<h2 style="margin-top:0">Dataset · 01</h2>
+<h3 style="margin-top:0">text-to-sql-mix-v2</h3>
+<p class="stat-value" style="font-size:40px">761k</p>
+<p style="font-size:16px; color: var(--ink-muted)">NL → SQL pairs from 10 merged public sources</p>
 </div>
 
-<div class="card-accent">
-<div class="card-title">Chart Reasoning</div>
-<div class="stat-value">75k</div>
-<p style="font-size:18px; color: var(--ink-muted); margin-top:12px">
-<strong>chart-reasoning-mix-v1</strong><br>
-nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)
-</p>
+<div class="card">
+<h2 style="margin-top:0">Dataset · 02</h2>
+<h3 style="margin-top:0">chart-reasoning-mix-v1</h3>
+<p class="stat-value" style="font-size:40px">75k</p>
+<p style="font-size:16px; color: var(--ink-muted)">nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)</p>
 </div>
 
-<div class="card-accent">
-<div class="card-title">SVG Rendering</div>
-<div class="stat-value">25k</div>
-<p style="font-size:18px; color: var(--ink-muted); margin-top:12px">
-<strong>svg-chart-render-v1</strong><br>
-nvBench charts re-rendered with matplotlib SVG backend
-</p>
+<div class="card">
+<h2 style="margin-top:0">Dataset · 03</h2>
+<h3 style="margin-top:0">svg-chart-render-v1</h3>
+<p class="stat-value" style="font-size:40px">25k</p>
+<p style="font-size:16px; color: var(--ink-muted)">nvBench charts re-rendered with matplotlib SVG backend</p>
 </div>
 
 </div>
@@ -446,83 +423,59 @@ nvBench charts re-rendered with matplotlib SVG backend
 
 ---
 
-<!-- _header: "Hub" -->
+## Hub
 
-## Everything is open
+# Everything is open on Hugging Face
 
-# All three datasets live on Hugging Face
-
-<br>
-
-<div class="grid-3">
-
-<div class="card">
-<div class="card-title">Hub</div>
-<h3 style="margin-top:4px">text-to-sql-mix-v2</h3>
-<p style="font-size:16px; color: var(--ink-muted)">761,155 rows · Apache 2.0<br><code>DanielRegaladoCardoso/text-to-sql-mix-v2</code></p>
-</div>
-
-<div class="card">
-<div class="card-title">Hub</div>
-<h3 style="margin-top:4px">chart-reasoning-mix-v1</h3>
-<p style="font-size:16px; color: var(--ink-muted)">~75k rows · CC-BY-4.0<br><code>DanielRegaladoCardoso/chart-reasoning-mix-v1</code></p>
-</div>
-
-<div class="card">
-<div class="card-title">Hub</div>
-<h3 style="margin-top:4px">svg-chart-render-v1</h3>
-<p style="font-size:16px; color: var(--ink-muted)">~25k rows · Apache 2.0<br><code>DanielRegaladoCardoso/svg-chart-render-v1</code></p>
-</div>
-
-</div>
+| Dataset | Rows | License | Hub |
+|---|---|---|---|
+| **text-to-sql-mix-v2** | 761,155 | Apache-2.0 | [huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2](https://huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2) |
+| **chart-reasoning-mix-v1** | ~75,000 | CC-BY-4.0 | [huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1](https://huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1) |
+| **svg-chart-render-v1** | ~25,000 | Apache-2.0 | [huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1](https://huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1) |
 
 <br>
 
-> Open by default. Anyone can reproduce, fine-tune, or remix.
+> Open by default. Anyone can reproduce, fine-tune their own variants, or extend the mix.
 
 ---
 
-<!-- _header: "Training · why Unsloth" -->
+## Training · why Unsloth
 
-## Why Unsloth + QLoRA
-
-# Fine-tune a 7B model on a single GPU. Without paying $1,000.
+# Fine-tune a 7B model on a single GPU — without paying $1,000
 
 <br>
 
-| | Vanilla Transformers | **Unsloth QLoRA** |
+| | Vanilla `transformers` | **Unsloth QLoRA** |
 |---|---|---|
-| 7B model on 48 GB GPU | ❌ won't fit | ✅ fits in 4-bit |
+| 7B model on 48 GB GPU | won't fit | fits in 4-bit |
 | Training speed | 1× baseline | **2× faster** |
 | Memory footprint | 1× baseline | **40% less** |
-| Output | full 14 GB weights | **160 MB adapter** |
+| Output artifact | full 14 GB weights | **~160 MB adapter** |
 
 <br>
 
-**The result:** what used to take a multi-GPU cluster now runs on one L40S — and we ship a tiny `.safetensors` file, not a 14 GB blob.
+**Result**: what used to need a multi-GPU cluster runs on one L40S — and we ship a tiny `.safetensors` adapter, not a 14 GB blob.
 
 ---
 
-<!-- _header: "Training · the run" -->
+## Training · the run
 
-## Training the SQL Generator
-
-<br>
+# Training the SQL Generator
 
 <div class="grid-2">
 
 <div>
 
-| | |
+| Setting | Value |
 |---|---|
-| Base model | Qwen2.5-Coder-7B-Instruct |
-| Method | QLoRA r=16, α=32 (4-bit base) |
-| Examples used | 672,949 |
+| Base | Qwen2.5-Coder-7B-Instruct |
+| Method | QLoRA r=16, α=32 (4-bit) |
+| Examples | 672,949 |
 | Sequences after packing | **154,462** |
-| Hardware | NVIDIA L40S (48 GB) |
-| Wall-clock time | **13.5 hours** |
-| Final training loss | **0.2658** |
-| Total cost | **$24** |
+| Hardware | 1× NVIDIA L40S (48 GB) |
+| Wall-clock | **13.5 hours** |
+| Final loss | **0.2658** |
+| Total cost | **~$24** |
 
 </div>
 
@@ -530,7 +483,7 @@ nvBench charts re-rendered with matplotlib SVG backend
 
 ```mermaid
 xychart-beta
-  title "Training loss curve"
+  title "Training loss (1 epoch)"
   x-axis "Step" [0, 2000, 4000, 6000, 9654]
   y-axis "Loss" 0 --> 1
   line [0.92, 0.41, 0.32, 0.28, 0.27]
@@ -546,24 +499,21 @@ xychart-beta
 
 ---
 
-<!-- _header: "Training · the trick" -->
+## Training · the trick
 
-## The single config flag that mattered
-
-# Sequence packing → 4× speedup, free
-
-<br>
+# One config flag → 4× speedup
 
 ```mermaid
 flowchart LR
-  A["723,000 examples<br/>variable length<br/>~1.7 s/step"] --> B[TRL packing]
+  A["723,000 examples<br/>variable length<br/>~1.7 s/step"] --> B["TRL <code>packing=True</code>"]
   B --> C["154,462 sequences<br/>concatenated to 1024 tokens<br/>~5.0 s/step"]
-  D["21 hours"] -.->|same epoch| E["13.5 hours"]
+
+  D["21 hours"] -.->|same epoch, same loss| E["13.5 hours"]
   A -.-> D
   C -.-> E
 
-  classDef node fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
-  classDef accent fill:#86BC25,stroke:#0E0E0E,color:#FFFFFF
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   class A,C node
   class D,E accent
 ```
@@ -571,47 +521,37 @@ flowchart LR
 <br>
 
 > One line in `SFTConfig`: `packing=True`.
-> Saved 7.5 hours and roughly $14 of GPU.
+> Saved 7.5 hours and ~$14 of GPU time.
 
 ---
 
-<!-- _header: "Training · validation" -->
+## Training · validation
 
-## Did it actually learn?
-
-# Sample inference vs ground truth
-
-<br>
+# Did it actually learn?
 
 ```sql
 -- Question: List all players from Tampa, Florida.
 
 -- Generated:
 SELECT player FROM table_name_68
-WHERE hometown = 'Tampa, Florida'
+WHERE hometown = 'Tampa, Florida';
 
 -- Gold:
 SELECT player FROM table_name_68
-WHERE hometown = "tampa, florida"
+WHERE hometown = "tampa, florida";
 ```
 
 <br>
 
 > Same query, modulo case and quotes — both DuckDB-valid.
 
-<br>
-
-Final loss **0.2658** at 9,654 steps — single epoch, no overfitting.
+Final loss **0.2658** at 9,654 steps · single epoch · no overfitting signal.
 
 ---
 
-<!-- _header: "Architecture · adapters" -->
+## Architecture · adapters
 
-## What "fine-tuned" actually means
-
-# We don't ship full models. We ship the diff.
-
-<br>
+# What "fine-tuned" actually means — we ship the diff
 
 ```mermaid
 flowchart LR
@@ -622,102 +562,93 @@ flowchart LR
   B --> M
   L --> M
 
-  classDef node fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
-  classDef accent fill:#86BC25,stroke:#0E0E0E,color:#FFFFFF
-  class B node
+  classDef node fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
+  classDef accent fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   class L accent
-  class M node
+  class M accent
 ```
 
 <br>
 
-| Adapter | Base | Hub |
+| Adapter | Base | Adapter size |
 |---|---|---|
-| `sql-generator-qwen25-coder-7b-lora` | Qwen 2.5 Coder 7B | 161 MB |
-| `chart-reasoner-phi3-mini-adapter-only` | Phi-3 Mini 4k | 38 MB |
-| `svg-renderer-deepseek-coder-1.3b-lora` | DeepSeek Coder 1.3B | 22 MB |
+| [`sql-generator-qwen25-coder-7b-lora`](https://huggingface.co/DanielRegaladoCardoso/sql-generator-qwen25-coder-7b-lora) | Qwen 2.5 Coder 7B | 161 MB |
+| [`chart-reasoner-phi3-mini-adapter-only`](https://huggingface.co/DanielRegaladoCardoso/chart-reasoner-phi3-mini-adapter-only) | Phi-3 Mini 4k | 38 MB |
+| [`svg-renderer-deepseek-coder-1.3b-lora`](https://huggingface.co/DanielRegaladoCardoso/svg-renderer-deepseek-coder-1.3b-lora) | DeepSeek Coder 1.3B | 22 MB |
 
 ---
 
-<!-- _header: "Architecture · how it runs" -->
+## Architecture · how the app runs
 
-## How the app orchestrates everything
-
-<br>
+# Per query: 4 LLM calls, 5–8 seconds end-to-end
 
 ```mermaid
 flowchart LR
   subgraph IN["User input"]
-    U1[CSV / JSON / Parquet]
-    U2[NL question]
+    U1["CSV / JSON / Parquet"]
+    U2["NL question"]
   end
 
-  SX[Schema extractor] --> DB[(DuckDB<br/>in-memory)]
+  SX["Schema extractor"] --> DB[("DuckDB<br/>in-memory")]
   U1 --> SX
 
-  ORCH{{Orchestrator}}
+  ORCH{{"Orchestrator"}}
   U2 --> ORCH
   DB --> ORCH
 
-  ORCH --> M1[SQL Generator<br/>Qwen + LoRA]
+  ORCH --> M1["SQL Generator<br/>Qwen + LoRA"]
   M1 -->|SQL| DB
-  DB -->|results| M2[Chart Reasoner<br/>Phi-3 + LoRA]
-  M2 -->|chart spec| M3[SVG Renderer<br/>DeepSeek + LoRA]
-  M3 --> OUT[Chart + narration<br/>+ downloads]
+  DB -->|results| M2["Chart Reasoner<br/>Phi-3 + LoRA"]
+  M2 -->|chart spec| M3["SVG Renderer<br/>DeepSeek + LoRA"]
+  M3 --> OUT["Chart + narration<br/>+ downloads"]
 
-  classDef in fill:#FFFFFF,stroke:#5A5A5A,color:#0E0E0E
-  classDef model fill:#FFFFFF,stroke:#86BC25,color:#0E0E0E,stroke-width:2px
+  classDef in fill:#FAFAF9,stroke:#5A5A5A,color:#0E0E0E
+  classDef model fill:#FFFFFF,stroke:#C96442,color:#0E0E0E,stroke-width:2px
   classDef orch fill:#0E0E0E,stroke:#0E0E0E,color:#FFFFFF
-  classDef out fill:#86BC25,stroke:#0E0E0E,color:#FFFFFF
+  classDef out fill:#C96442,stroke:#0E0E0E,color:#FFFFFF
+  classDef db fill:#FFFFFF,stroke:#0E0E0E,color:#0E0E0E
   class U1,U2 in
   class M1,M2,M3 model
   class ORCH orch
-  class OUT,DB out
+  class OUT out
+  class DB db
 ```
 
-<br>
-
-**4 LLM calls per query · ~5–8 s on a warm GPU · all three adapters loaded once at module level.**
+All three adapters loaded **once at module level** into a half-H200 via ZeroGPU.
 
 ---
 
-<!-- _header: "Engineering" -->
-
-## Things we learned shipping this
-
-<br>
+## Engineering · what we learned
 
 <div class="grid-2">
 
-<div class="card-accent">
-<div class="card-title">ZeroGPU pattern</div>
-<p>Load models on <code>cuda</code> at <strong>module level</strong>, not lazily inside <code>@spaces.GPU</code>. Lazy loading was burning 30–60 s of quota per query.</p>
+<div>
+
+> **ZeroGPU pattern**
+> Load models on `cuda` at **module level**, not lazily inside `@spaces.GPU`. Lazy loading was burning 30–60 s of quota per query.
+
+> **PEFT explicit**
+> Apply LoRA via `PeftModel.from_pretrained(base, adapter)`. Auto-detect triggered a base/adapter rank mismatch.
+
 </div>
 
-<div class="card-accent">
-<div class="card-title">PEFT explicit</div>
-<p>Apply LoRA via <code>PeftModel.from_pretrained(base, adapter)</code>. Auto-detect triggered a base/adapter rank mismatch.</p>
-</div>
+<div>
 
-<div class="card-accent">
-<div class="card-title">DuckDB > SQLite</div>
-<p>Native CSV/JSON/Parquet ingestion, ANSI SQL, 10× faster on analytics. The schema extractor is much cleaner.</p>
-</div>
+> **DuckDB > SQLite**
+> Native CSV/JSON/Parquet ingestion, ANSI SQL, 10× faster on analytics workloads.
 
-<div class="card-accent">
-<div class="card-title">Self-correction loop</div>
-<p>If SQL fails, retry up to 3× with the error fed back to the model. Took accuracy from ~80% → ~95%, free.</p>
+> **Self-correction loop**
+> If SQL fails, retry up to 3× with the error fed back to the model. Took accuracy from ~80% to ~95% — free.
+
 </div>
 
 </div>
 
 ---
 
-<!-- _header: "Cost" -->
+## Cost summary
 
-## What it cost to build
-
-<br>
+# What it actually cost to build
 
 <div class="grid-2">
 
@@ -728,7 +659,7 @@ flowchart LR
 | SQL Generator training | HF Jobs L40S, 13.5 h | **~$24** |
 | Chart Reasoner training | Colab / HF Jobs | ~$3 |
 | SVG Renderer training | Colab / HF Jobs | ~$1 |
-| Chart dataset (GPT distillation) | gpt-4.1-nano Batch | ~$2.50 |
+| Chart dataset GPT distillation | gpt-4.1-nano Batch | ~$2.50 |
 | **Inference hosting** | HF Spaces ZeroGPU | **$0** |
 | | | |
 | **Total** | | **~$30** |
@@ -737,18 +668,13 @@ flowchart LR
 
 <div>
 
-<br>
-<br>
-
-<div class="stat">
-<div class="stat-value">$30</div>
-<div class="stat-label">All-in to train three production fine-tunes</div>
-</div>
+<p class="stat-value">$30</p>
+<p class="stat-label">All-in to train three production fine-tunes</p>
 
 <br>
 
 > Less than dinner.
-> Less than one OpenAI eval.
+> Less than one OpenAI eval run.
 > Open weights, reproducible, on Hugging Face.
 
 </div>
@@ -757,33 +683,27 @@ flowchart LR
 
 ---
 
-<!-- _header: "Demo" -->
-<!-- _class: lead -->
+<!-- _class: lead no-mark -->
 
-# Live demo
-
-<br>
-
-`huggingface.co/spaces/DanielRegaladoCardoso/sql-agent`
+# Demo
 
 <br>
 
-<div style="font-size:18px; color: var(--ink-muted); max-width: 720px; margin: 0 auto;">
+[**huggingface.co/spaces/DanielRegaladoCardoso/sql-agent**](https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent)
 
-Drop a CSV → ask a question → get SQL, a chart, a narrative finding, and download buttons.
-All powered by three fine-tuned LoRAs running on a half-H200.
+<br>
+
+<div style="font-size:18px; color: var(--ink-muted); max-width: 760px;">
+
+Drop a CSV → ask a question → get SQL, a chart, an analyst-style finding, and download buttons. All powered by three fine-tuned LoRAs running on a half-H200.
 
 </div>
 
 ---
 
-<!-- _header: "Wrap-up" -->
-
 ## Closing
 
 # Three fine-tunes. Thirty dollars. Thirteen and a half hours.
-
-<br>
 
 <div class="grid-2">
 
@@ -791,20 +711,20 @@ All powered by three fine-tuned LoRAs running on a half-H200.
 
 **Open source:**
 
-- Repo · `github.com/DanielRegaladoUMiami/sql-agent-llmops`
-- Space · `hf.co/spaces/DanielRegaladoCardoso/sql-agent`
-- Models · 3 LoRAs on Hugging Face Hub
-- Datasets · 3 published, fully reproducible
+- Repo · [github.com/DanielRegaladoUMiami/sql-agent-llmops](https://github.com/DanielRegaladoUMiami/sql-agent-llmops)
+- Space · [hf.co/spaces/DanielRegaladoCardoso/sql-agent](https://huggingface.co/spaces/DanielRegaladoCardoso/sql-agent)
+- 3 LoRAs on Hugging Face Hub
+- 3 datasets, fully reproducible
 
 </div>
 
 <div>
 
-**What's next:**
+**Where it goes next:**
 
 - Multi-turn conversation memory
-- Evaluation on Spider / WikiSQL / BIRD
-- Anomaly detection on dataset upload
+- Eval harness on Spider / WikiSQL / BIRD
+- Anomaly detection at upload
 - Statistical summary at ingest
 
 </div>
