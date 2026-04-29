@@ -91,9 +91,31 @@ gradio-app, .gradio-container, .main, .app, .contain, .wrap {
   font-family: var(--font) !important;
 }
 .gradio-container {
-  max-width: 760px !important;
+  max-width: 1280px !important;
   margin: 0 auto !important;
-  padding: 36px 24px 100px !important;
+  padding: 36px 32px 100px !important;
+}
+
+/* Two-column rectangular layout */
+.split-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 32px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .split-layout { grid-template-columns: 1fr; gap: 20px; }
+}
+.split-left { position: sticky; top: 24px; }
+.split-right { min-height: 400px; }
+
+.panel-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted) !important;
+  margin: 0 0 10px 2px;
 }
 footer { display: none !important; }
 .show-api { display: none !important; }
@@ -836,41 +858,44 @@ def build_app() -> gr.Blocks:
             '</div>'
         )
 
-        # Upload
-        with gr.Row(elem_classes=["upload-row"]):
-            upload = gr.File(
-                label="",
-                file_types=[".csv", ".json", ".parquet", ".xlsx", ".xls"],
-                show_label=False,
-                container=False,
-            )
-        chip_html = gr.HTML("")
+        # Two-column layout: LEFT = data/question controls, RIGHT = results
+        with gr.Row(elem_classes=["split-layout"]):
+            # ---------- LEFT panel ----------
+            with gr.Column(elem_classes=["split-left"], scale=0):
+                gr.HTML('<div class="panel-label">Dataset</div>')
+                with gr.Row(elem_classes=["upload-row"]):
+                    upload = gr.File(
+                        label="",
+                        file_types=[".csv", ".json", ".parquet", ".xlsx", ".xls"],
+                        show_label=False,
+                        container=False,
+                    )
+                chip_html = gr.HTML("")
+                schema_html = gr.HTML("")
 
-        # Schema preview — sits between dataset and the question, so users
-        # know the available column names before writing a query.
-        schema_html = gr.HTML("")
+                gr.HTML('<div class="panel-label" style="margin-top:18px">Question</div>')
+                with gr.Group(elem_classes=["question-row"]):
+                    question = gr.Textbox(
+                        placeholder="Ask anything about your data…",
+                        lines=3,
+                        max_lines=10,
+                        show_label=False,
+                        container=False,
+                        autofocus=True,
+                    )
+                    gr.HTML('<div class="kb-hint">Press Enter to send · Shift+Enter for newline</div>')
 
-        # Question
-        with gr.Group(elem_classes=["question-row"]):
-            question = gr.Textbox(
-                placeholder="Ask anything about your data…",
-                lines=2,
-                max_lines=8,
-                show_label=False,
-                container=False,
-                autofocus=True,
-            )
-            gr.HTML('<div class="kb-hint">Press Enter to send · Shift+Enter for newline</div>')
+                with gr.Row():
+                    ask_btn = gr.Button("Ask", variant="primary", size="sm")
+                    reset_btn = gr.Button("Clear", variant="secondary", size="sm")
+                    demo_btn = gr.Button("Demo", variant="secondary", size="sm",
+                                          elem_id="load_demo_btn")
 
-        with gr.Row():
-            ask_btn = gr.Button("Ask", variant="primary", size="sm")
-            reset_btn = gr.Button("Clear", variant="secondary", size="sm")
-            demo_btn = gr.Button("Load demo dataset", variant="secondary", size="sm",
-                                  elem_id="load_demo_btn")
-
-        # Result of latest query (single-shot, replaces previous on each Ask)
-        history_state = gr.State([])
-        conversation = gr.HTML(_conversation_html([]))
+            # ---------- RIGHT panel ----------
+            with gr.Column(elem_classes=["split-right"], scale=1):
+                gr.HTML('<div class="panel-label">Result</div>')
+                history_state = gr.State([])
+                conversation = gr.HTML(_conversation_html([]))
 
         # ------------- events -------------
         upload.upload(
