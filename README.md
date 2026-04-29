@@ -18,6 +18,9 @@
 
 </div>
 
+> **Team** · Daniel Regalado Cardoso · Nefeli Zafeiri · Oliver Mazariegos · Eleniz Espina
+> MSBA · University of Miami · 2026
+
 ---
 
 ## 🤗 Models on Hugging Face Hub
@@ -369,10 +372,11 @@ Contributions welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ## Citation
 
 ```bibtex
-@misc{regalado2026sqlagent,
-  author       = {Daniel Regalado Cardoso},
+@misc{sqlagent2026,
+  author       = {Regalado Cardoso, Daniel and Zafeiri, Nefeli and Mazariegos, Oliver and Espina, Eleniz},
   title        = {SQL Agent LLMOps: Multi-Model Orchestration for Text-to-SQL with Visualization},
   year         = {2026},
+  institution  = {MSBA, University of Miami},
   howpublished = {\url{https://github.com/DanielRegaladoUMiami/sql-agent-llmops}},
 }
 ```
