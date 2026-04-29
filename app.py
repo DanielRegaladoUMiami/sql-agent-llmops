@@ -124,20 +124,24 @@ footer { display: none !important; }
 }
 
 /* File upload — compact, Apple-style */
-.upload-row { margin-bottom: 18px; }
+.upload-row { margin-bottom: 14px; }
 .upload-row .gr-file, .upload-row .file-preview { background: transparent !important; }
 .upload-row [data-testid="file"] {
   border: 1.5px dashed var(--ink-faint) !important;
   border-radius: var(--radius) !important;
-  padding: 24px 16px !important;
+  padding: 20px 16px !important;
   background: transparent !important;
   transition: all 200ms ease !important;
+  min-height: 90px !important;
 }
 .upload-row [data-testid="file"]:hover {
   border-color: var(--accent) !important;
   background: var(--accent-soft) !important;
 }
-.upload-row [data-testid="file"] * { color: var(--ink-muted) !important; }
+.upload-row [data-testid="file"] *,
+.upload-row .upload-text,
+.upload-row svg { color: var(--ink-muted) !important; fill: var(--ink-muted) !important; }
+.upload-row .file-preview, .upload-row [class*="FilePreview"] { display: none !important; }
 
 /* File chip (after upload) */
 .file-chip {
@@ -419,6 +423,17 @@ details > *:not(summary) { padding: 0 14px 14px; }
 /* Hide labels Gradio adds */
 .gr-form > label, label.svelte-1gfkn6j, .label-wrap { display: none !important; }
 
+/* Narration — analyst-style finding under the chart */
+.narration {
+  margin: 12px 2px 4px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink) !important;
+  letter-spacing: -0.005em;
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+}
+
 /* Download links below chart */
 .downloads {
   display: flex;
@@ -646,6 +661,10 @@ def _turn_html_complete(result: dict) -> str:
 
     if result.get("svg"):
         parts.append(f'<div class="chart-wrap">{result["svg"]}</div>')
+
+    # Narration: 1-2 sentence finding from the analyst persona
+    if result.get("narration"):
+        parts.append(f'<div class="narration">{result["narration"]}</div>')
 
     # Inline download links for CSV + SVG
     parts.append(_download_links_html(

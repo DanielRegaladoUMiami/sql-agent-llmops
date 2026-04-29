@@ -120,3 +120,58 @@ class SQLGenerator:
             stmt, _, _ = text.partition(";")
             text = stmt + ";"
         return text.strip()
+
+    def narrate(
+        self,
+        question: str,
+        sql: str,
+        results: list[dict],
+        columns: list[dict],
+    ) -> str:
+        """Generate a 2-sentence narrative interpreting the query results.
+        Reuses the same Qwen model that's already loaded for SQL generation."""
+        if not results:
+            return ""
+
+        sample = results[:10]
+        col_names = [c["name"] for c in columns]
+        narrate_system = (
+            "You are a senior data analyst summarizing query results for a "
+            "stakeholder. Write exactly 1-2 short sentences highlighting the "
+            "single most interesting finding (top contributor, sharp "
+            "distribution, surprising gap, etc.). Use specific numbers from "
+            "the data. Do not describe what the chart looks like; describe "
+            "what the data reveals. No preamble like 'Here is...'."
+        )
+        user_content = (
+            f"Question asked: {question}\n"
+            f"Columns: {col_names}\n"
+            f"Total rows: {len(results)}\n"
+            f"Top rows: {sample}\n\n"
+            "Write the 1-2 sentence finding now:"
+        )
+        messages = [
+            {"role": "system", "content": narrate_system},
+            {"role": "user", "content": user_content},
+        ]
+        try:
+            import torch
+            input_ids = self.tokenizer.apply_chat_template(
+                messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
+            ).to(self.model.device)
+            with torch.no_grad():
+                out = self.model.generate(
+                    input_ids,
+                    max_new_tokens=120,
+                    do_sample=False,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                )
+            text = self.tokenizer.decode(
+                out[0][input_ids.shape[1]:], skip_special_tokens=True
+            ).strip()
+            # Strip leading quotes/markdown
+            text = re.sub(r"^[\"'`]+|[\"'`]+$", "", text)
+            return text
+        except Exception as e:
+            logger.warning(f"narration failed: {e}")
+            return ""

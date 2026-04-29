@@ -62,6 +62,7 @@ class SQLAgentOrchestrator:
             "columns": [],
             "chart_spec": None,
             "svg": None,
+            "narration": None,
             "error": None,
         }
 
@@ -111,6 +112,15 @@ class SQLAgentOrchestrator:
 
             svg = self.svg_renderer.generate(spec, rows)
             result["svg"] = svg
+
+            # Result narration — reuse Qwen for a 1-2 sentence finding
+            try:
+                result["narration"] = self.sql_generator.narrate(
+                    question=question, sql=sql, results=rows, columns=cols,
+                )
+            except Exception as e:
+                logger.warning(f"narration step failed: {e}")
+                result["narration"] = None
 
             return result
 
