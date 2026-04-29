@@ -171,6 +171,12 @@ footer { display: none !important; }
 .upload-row svg { color: var(--ink-muted) !important; fill: var(--ink-muted) !important; }
 .upload-row .file-preview, .upload-row [class*="FilePreview"] { display: none !important; }
 
+/* Hide the gr.File "X clear" button (we have our own Clear button) */
+.upload-row [class*="Remove"], .upload-row button[aria-label*="lear"],
+.upload-row button[aria-label*="emove"], .upload-row .remove { display: none !important; }
+.upload-row .file { padding: 0 !important; background: transparent !important; }
+.upload-row [data-testid="file"] .download-link { display: none !important; }
+
 /* File chip (after upload) */
 .file-chip {
   display: inline-flex;
@@ -233,6 +239,10 @@ textarea::placeholder { color: var(--ink-muted) !important; }
   box-shadow: none !important;
   padding: 0 !important;
 }
+
+/* Button row: keep all buttons in a single line, give Ask more weight */
+.btn-row { gap: 8px !important; flex-wrap: nowrap !important; margin-top: 12px; }
+.btn-row > * { min-width: 0 !important; }
 
 /* Buttons */
 button.primary, button[variant="primary"], .gr-button.primary {
@@ -1056,11 +1066,11 @@ def build_app() -> gr.Blocks:
                     )
                     gr.HTML('<div class="kb-hint">Press Enter to send · Shift+Enter for newline</div>')
 
-                with gr.Row():
-                    ask_btn = gr.Button("Ask", variant="primary", size="sm")
-                    reset_btn = gr.Button("Clear", variant="secondary", size="sm")
+                with gr.Row(elem_classes=["btn-row"]):
+                    ask_btn = gr.Button("Ask", variant="primary", size="sm", scale=2)
+                    reset_btn = gr.Button("Clear", variant="secondary", size="sm", scale=1)
                     demo_btn = gr.Button("Demo", variant="secondary", size="sm",
-                                          elem_id="load_demo_btn")
+                                          elem_id="load_demo_btn", scale=1)
 
             # ---------- RIGHT panel ----------
             with gr.Column(elem_classes=["split-right"], scale=1):

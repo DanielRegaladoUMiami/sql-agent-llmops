@@ -40,8 +40,10 @@ def _fmt(v: float) -> str:
 
 
 def _theme_layout(title: str = "") -> dict:
+    # Don't render Plotly's title — the user's question is already shown
+    # above the chart card, this would just duplicate.
     return dict(
-        title=dict(text=title, font=dict(family=FONT_FAMILY, size=15, color=INK)),
+        title=dict(text="", font=dict(family=FONT_FAMILY, size=15, color=INK)),
         font=dict(family=FONT_FAMILY, size=12, color=INK),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
@@ -66,6 +68,8 @@ def _theme_layout(title: str = "") -> dict:
 class PlotlyRenderer:
     """Render a chart spec + data tuple as a themed inline SVG."""
 
+    MAX_CATEGORIES = 30  # cap for bar/pie/scatter to keep charts readable
+
     def render(self, spec: Dict[str, Any], data: List[Dict[str, Any]]) -> str:
         if not data:
             return self._empty("No data returned by the query.")
@@ -75,6 +79,14 @@ class PlotlyRenderer:
         title = spec.get("title") or ""
         x = spec.get("x_column") or (df.columns[0] if len(df.columns) >= 1 else None)
         y = spec.get("y_column") or (df.columns[1] if len(df.columns) >= 2 else None)
+
+        # If categorical chart with too many categories: take top N by y value
+        if chart_type in ("bar", "pie") and y and y in df.columns and len(df) > self.MAX_CATEGORIES:
+            try:
+                df = df.sort_values(by=y, ascending=False).head(self.MAX_CATEGORIES)
+                title = (title or "Top values") + f" (top {self.MAX_CATEGORIES})"
+            except Exception:
+                df = df.head(self.MAX_CATEGORIES)
 
         try:
             fig = self._build(chart_type, df, x, y, title, spec)
