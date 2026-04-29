@@ -1,11 +1,19 @@
 """
-Generate a fully editable PowerPoint deck for the SQL Agent class
+Generate an 8-slide editable PowerPoint deck for the SQL Agent class
 presentation. Uses python-pptx so every text element is a native shape
-that can be clicked into and edited in PowerPoint or Keynote.
+that can be edited in PowerPoint or Keynote.
 
-Run:
-    python3 generate_pptx.py
-Output: slides-editable.pptx
+Slide map:
+  1. Title
+  2. Problem statement + 6-phase methodology
+  3. Data — sourcing, curation, three datasets
+  4. Model 01 · SQL Generator
+  5. Model 02 · Chart Reasoner
+  6. Model 03 · SVG Renderer
+  7. System architecture + cost
+  8. Demo + conclusion
+
+Run: python3 generate_pptx.py
 """
 
 from pptx import Presentation
@@ -13,9 +21,6 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.oxml.ns import qn
-from copy import deepcopy
-from lxml import etree
 
 # ---------------------------------------------------------------- theme
 INK = RGBColor(0x0E, 0x0E, 0x0E)
@@ -26,7 +31,7 @@ SURFACE_RAISED = RGBColor(0xFF, 0xFF, 0xFF)
 ACCENT = RGBColor(0xC9, 0x64, 0x42)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 
-FONT = "Calibri"  # Closest cross-platform readable to SF Pro
+FONT = "Calibri"
 FONT_MONO = "Menlo"
 
 SLIDE_W = Inches(13.333)
@@ -63,33 +68,21 @@ def add_text(slide, x, y, w, h, text, size=18, bold=False, color=INK, font=FONT,
 
 def add_paragraphs(slide, x, y, w, h, paragraphs, size=14, color=INK, font=FONT,
                    line_spacing=1.45):
-    """paragraphs: list of either strings or list of (text, opts) tuples."""
     box = slide.shapes.add_textbox(x, y, w, h)
     tf = box.text_frame
     tf.word_wrap = True
     tf.margin_left = Emu(0); tf.margin_right = Emu(0)
     tf.margin_top = Emu(0); tf.margin_bottom = Emu(0)
-
     for i, para in enumerate(paragraphs):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.line_spacing = line_spacing
         if i > 0:
             p.space_before = Pt(4)
-        if isinstance(para, str):
-            run = p.add_run()
-            run.text = para
-            run.font.name = font
-            run.font.size = Pt(size)
-            run.font.color.rgb = color
-        else:
-            # list of runs: each is (text, {bold, color, font, size})
-            for text, opts in para:
-                run = p.add_run()
-                run.text = text
-                run.font.name = opts.get("font", font)
-                run.font.size = Pt(opts.get("size", size))
-                run.font.bold = opts.get("bold", False)
-                run.font.color.rgb = opts.get("color", color)
+        run = p.add_run()
+        run.text = para
+        run.font.name = font
+        run.font.size = Pt(size)
+        run.font.color.rgb = color
     return box
 
 
@@ -113,7 +106,6 @@ def add_line(slide, x1, y1, x2, y2, color=INK_FAINT, weight=0.5):
 
 
 def add_accent_bar(slide):
-    """Small amber bar at top-left, the project's accent mark."""
     bar = slide.shapes.add_shape(
         MSO_SHAPE.RECTANGLE,
         Inches(0.83), Inches(0.45),
@@ -125,7 +117,7 @@ def add_accent_bar(slide):
 
 
 def add_kicker(slide, text, x=Inches(0.83), y=Inches(0.6)):
-    add_text(slide, x, y, Inches(8), Inches(0.3),
+    add_text(slide, x, y, Inches(11), Inches(0.3),
              text.upper(), size=10, bold=True, color=ACCENT,
              line_spacing=1.0)
 
@@ -140,14 +132,13 @@ def add_footer(slide, label, page_num):
     add_text(slide, Inches(0.83), Inches(7.05), Inches(8), Inches(0.3),
              label, size=9, color=INK_MUTED)
     add_text(slide, Inches(12.0), Inches(7.05), Inches(0.5), Inches(0.3),
-             str(page_num), size=9, color=INK_MUTED, align=PP_ALIGN.RIGHT)
+             page_num, size=9, color=INK_MUTED, align=PP_ALIGN.RIGHT)
 
 
 # ------------------------------------------------------------- build
 prs = Presentation()
 prs.slide_width = SLIDE_W
 prs.slide_height = SLIDE_H
-
 blank = prs.slide_layouts[6]
 
 
@@ -175,49 +166,24 @@ add_text(slide, Inches(1.5), Inches(6.1), Inches(10), Inches(0.4),
          size=12, color=INK_MUTED)
 
 
-# ============================================================ 02 PROBLEM
+# ============================================================ 02 PROBLEM + METHODOLOGY
 slide = prs.slides.add_slide(blank)
 set_bg(slide, SURFACE)
 add_accent_bar(slide)
-add_kicker(slide, "Problem statement")
+add_kicker(slide, "Problem and methodology")
 add_title(slide, "Tabular data analysis still requires SQL knowledge")
 
-# Left column
-add_text(slide, Inches(0.83), Inches(2.4), Inches(5.5), Inches(0.4),
-         "Business users frequently have:", size=15, color=INK)
-add_paragraphs(slide, Inches(0.83), Inches(2.85), Inches(5.5), Inches(2.5), [
-    "•  Tabular data they need to query",
-    "•  Specific questions in mind",
-    "•  No working SQL knowledge",
-], size=14, color=INK)
-add_text(slide, Inches(0.83), Inches(4.6), Inches(5.5), Inches(1.5),
-         "Existing options (manual SQL, generic chatbots, BI tools) each have trade-offs in cost, accuracy, or accessibility.",
-         size=13, color=INK_MUTED)
+# Problem
+add_text(slide, Inches(0.83), Inches(2.2), Inches(11), Inches(0.5),
+         "Business users have tabular data and questions, but no working SQL knowledge. Existing options (manual SQL, generic chatbots, BI tools) trade off cost, accuracy, or accessibility.",
+         size=13, color=INK)
 
-# Right column — Objective card
-card = add_rect(slide, Inches(7.0), Inches(2.4), Inches(5.5), Inches(4.0))
-add_text(slide, Inches(7.3), Inches(2.55), Inches(5), Inches(0.3),
-         "OBJECTIVE", size=10, bold=True, color=ACCENT)
-add_text(slide, Inches(7.3), Inches(2.85), Inches(5), Inches(0.5),
-         "Build a system that:", size=15, bold=True, color=INK)
-add_paragraphs(slide, Inches(7.3), Inches(3.4), Inches(5), Inches(3), [
-    "1.  Accepts a CSV or JSON file as input",
-    "2.  Accepts a question in natural language",
-    "3.  Returns the answer as a chart and a written finding",
-    "4.  Runs at low cost on free GPU infrastructure",
-], size=13, color=INK)
+# Section divider
+add_text(slide, Inches(0.83), Inches(3.15), Inches(11), Inches(0.3),
+         "OUR APPROACH — SIX PHASES FROM RAW DATA TO DEPLOYED SYSTEM",
+         size=10, bold=True, color=INK_MUTED)
 
-add_footer(slide, "Problem statement", "02 / 13")
-
-
-# ============================================================ 03 METHODOLOGY
-slide = prs.slides.add_slide(blank)
-set_bg(slide, SURFACE)
-add_accent_bar(slide)
-add_kicker(slide, "Methodology")
-add_title(slide, "Six phases from raw data to deployed system")
-
-# Six boxes left to right
+# Six phase boxes
 phases = [
     ("1", "Source", "10 public\ndatasets"),
     ("2", "Curate", "1.2M to 723k\nrows"),
@@ -230,240 +196,131 @@ box_w = Inches(1.85)
 gap = Inches(0.15)
 total_w = box_w * 6 + gap * 5
 start_x = (SLIDE_W - total_w) / 2
-
 for i, (num, name, sub) in enumerate(phases):
     x = start_x + (box_w + gap) * i
     accent = i >= 3
     line_color = ACCENT if accent else INK_FAINT
     line_w = 1.5 if accent else 0.75
-    rect = add_rect(slide, x, Inches(3.2), box_w, Inches(1.6),
-                    fill=SURFACE_RAISED, line=line_color, line_w=line_w)
-    add_text(slide, x, Inches(3.35), box_w, Inches(0.3), num,
+    add_rect(slide, x, Inches(3.7), box_w, Inches(1.7),
+             fill=SURFACE_RAISED, line=line_color, line_w=line_w)
+    add_text(slide, x, Inches(3.85), box_w, Inches(0.3), num,
              size=11, bold=True, color=ACCENT, align=PP_ALIGN.CENTER)
-    add_text(slide, x, Inches(3.6), box_w, Inches(0.4), name,
+    add_text(slide, x, Inches(4.15), box_w, Inches(0.4), name,
              size=15, bold=True, color=INK, align=PP_ALIGN.CENTER)
-    add_text(slide, x, Inches(4.0), box_w, Inches(0.7), sub,
+    add_text(slide, x, Inches(4.6), box_w, Inches(0.7), sub,
              size=11, color=INK_MUTED, align=PP_ALIGN.CENTER)
-    # arrow
     if i < 5:
         ax = x + box_w + Inches(0.02)
-        add_line(slide, ax, Inches(4.0), ax + Inches(0.11), Inches(4.0),
+        add_line(slide, ax, Inches(4.55), ax + Inches(0.11), Inches(4.55),
                  color=INK_MUTED, weight=0.75)
 
-add_text(slide, Inches(0.83), Inches(5.5), Inches(11.67), Inches(0.6),
-         "Each phase produces a reproducible artifact — a dataset, a model adapter, or a deployable component.",
-         size=13, color=INK_MUTED)
-add_text(slide, Inches(0.83), Inches(5.95), Inches(11.67), Inches(0.6),
-         "The repository contains the scripts to recreate each step.",
-         size=13, color=INK_MUTED)
+# Objective box at bottom
+obj_y = Inches(5.7)
+add_text(slide, Inches(0.83), obj_y, Inches(11), Inches(0.3),
+         "OBJECTIVE", size=10, bold=True, color=ACCENT)
+add_text(slide, Inches(0.83), obj_y + Inches(0.3), Inches(11), Inches(0.7),
+         "Accept a CSV/JSON file and a question in English. Return SQL, query results, a chart, and a written finding — at low cost on free GPU infrastructure.",
+         size=13, color=INK)
 
-add_footer(slide, "Methodology overview", "03 / 13")
+add_footer(slide, "Problem and methodology", "02 / 08")
 
 
-# ============================================================ 04 PHASE 1 SOURCING
+# ============================================================ 03 DATA
 slide = prs.slides.add_slide(blank)
 set_bg(slide, SURFACE)
 add_accent_bar(slide)
-add_kicker(slide, "Phase 1 — Sourcing")
-add_title(slide, "Aggregating ten public text-to-SQL datasets")
+add_kicker(slide, "Phases 1, 2 and 3 — Data")
+add_title(slide, "From 10 public datasets to three task corpora")
 
-# Left list
-add_text(slide, Inches(0.83), Inches(2.4), Inches(5.5), Inches(0.4),
-         "Selected ten existing datasets covering different schemas and SQL dialects:",
-         size=13, color=INK)
-sources = [
-    "b-mc2/sql-create-context", "gretelai/synthetic_text_to_sql",
-    "knowrohit07/know_sql", "NumbersStation/NSText2SQL",
-    "Clinton/Text-to-sql-v1", "motherduckdb/duckdb-text2sql-25k",
-    "bugdaryan/spider-natsql-wikisql", "ChrisHayduk/Llama-2-SQL",
-    "kaxap/llama2-sql-instruct", "PipableAI/spider-bird",
-]
-add_paragraphs(slide, Inches(0.83), Inches(3.0), Inches(5.5), Inches(4),
-               [f"•  {s}" for s in sources], size=12, color=INK, font=FONT_MONO,
-               line_spacing=1.5)
-
-# Right column
-add_text(slide, Inches(7.0), Inches(2.4), Inches(5.5), Inches(0.4),
-         "RATIONALE", size=10, bold=True, color=ACCENT)
-add_text(slide, Inches(7.0), Inches(2.7), Inches(5.5), Inches(1.6),
-         "Building a corpus from scratch was not feasible within the project timeline. Public datasets give us schema diversity and large coverage with permissive licenses.",
-         size=13, color=INK)
-add_text(slide, Inches(7.0), Inches(4.6), Inches(5.5), Inches(0.4),
-         "COMBINED SIZE", size=10, bold=True, color=ACCENT)
-add_text(slide, Inches(7.0), Inches(4.9), Inches(5.5), Inches(1.6),
-         "Approximately 1.2 million rows before cleaning. Heterogeneous formats and varying quality, requiring substantial pre-processing.",
-         size=13, color=INK)
-
-add_footer(slide, "Phase 1 · Sourcing", "04 / 13")
-
-
-# ============================================================ 05 PHASE 2 CURATION
-slide = prs.slides.add_slide(blank)
-set_bg(slide, SURFACE)
-add_accent_bar(slide)
-add_kicker(slide, "Phase 2 — Curation")
-add_title(slide, "Cleaning the merged corpus")
-
-# Pipeline blocks
-steps = [
-    ("10 raw sources", "1.2M rows", False),
-    ("Schema unification", "7-col format", False),
-    ("Deduplication", "question hashing", False),
-    ("Length filter", "≤ 1024 tokens", False),
-    ("Final corpus", "761,155 rows", True),
-    ("Train / Val / Test", "723k / 19k / 19k", True),
-]
-sw = Inches(1.85); sg = Inches(0.12)
-total = sw * 6 + sg * 5
+# Top: three stat boxes for the data pipeline
+stats_top = [("1.2M", "Raw rows from 10 public sources"),
+             ("723k", "Final usable training rows"),
+             ("3", "Task-specific datasets built")]
+sw_in = Inches(3.85); gap = Inches(0.25)
+total = sw_in * 3 + gap * 2
 sx = (SLIDE_W - total) / 2
-for i, (top, bot, accent) in enumerate(steps):
-    x = sx + (sw + sg) * i
+for i, (val, label) in enumerate(stats_top):
+    x = sx + (sw_in + gap) * i
+    add_rect(slide, x, Inches(2.2), sw_in, Inches(1.2),
+             fill=SURFACE_RAISED, line=INK_FAINT, line_w=0.75)
+    add_text(slide, x, Inches(2.35), sw_in, Inches(0.6),
+             val, size=36, bold=True, color=INK, align=PP_ALIGN.CENTER)
+    add_text(slide, x, Inches(2.95), sw_in, Inches(0.4),
+             label, size=11, color=INK_MUTED, align=PP_ALIGN.CENTER)
+
+# Pipeline below
+add_text(slide, Inches(0.83), Inches(3.65), Inches(11), Inches(0.3),
+         "PIPELINE — REPRODUCIBLE VIA UV SCRIPTS IN training/data_pipelines/",
+         size=10, bold=True, color=INK_MUTED)
+
+steps = [
+    ("Source", "10 public\ndatasets"),
+    ("Unify", "7-column\ncanonical"),
+    ("Dedup", "question\nhashing"),
+    ("Filter", "≤ 1024\ntokens"),
+    ("Split", "723k / 19k / 19k"),
+]
+sw = Inches(2.2); sg = Inches(0.18)
+total_p = sw * 5 + sg * 4
+spx = (SLIDE_W - total_p) / 2
+for i, (top, bot) in enumerate(steps):
+    x = spx + (sw + sg) * i
+    accent = (i == 4)
     line_color = ACCENT if accent else INK_FAINT
     line_w = 1.5 if accent else 0.75
-    add_rect(slide, x, Inches(2.7), sw, Inches(1.4), fill=SURFACE_RAISED,
-             line=line_color, line_w=line_w)
-    add_text(slide, x, Inches(2.95), sw, Inches(0.5), top,
+    add_rect(slide, x, Inches(4.0), sw, Inches(1.1),
+             fill=SURFACE_RAISED, line=line_color, line_w=line_w)
+    add_text(slide, x, Inches(4.18), sw, Inches(0.4), top,
              size=12, bold=True, color=INK, align=PP_ALIGN.CENTER)
-    add_text(slide, x, Inches(3.5), sw, Inches(0.5), bot,
-             size=11, color=INK_MUTED, align=PP_ALIGN.CENTER)
-    if i < 5:
+    add_text(slide, x, Inches(4.55), sw, Inches(0.5), bot,
+             size=10, color=INK_MUTED, align=PP_ALIGN.CENTER)
+    if i < 4:
         ax = x + sw + Inches(0.02)
-        add_line(slide, ax, Inches(3.4), ax + Inches(0.08), Inches(3.4),
+        add_line(slide, ax, Inches(4.55), ax + Inches(0.13), Inches(4.55),
                  color=INK_MUTED, weight=0.75)
 
-# Stats below
-stats = [("1.2M", "Raw rows"), ("761k", "After dedup"),
-         ("93%", "Pass length filter"), ("723k", "Final training set")]
-sw = Inches(2.5); sg = Inches(0.4)
-total = sw * 4 + sg * 3
-sx = (SLIDE_W - total) / 2
-for i, (val, label) in enumerate(stats):
-    x = sx + (sw + sg) * i
-    add_text(slide, x, Inches(4.7), sw, Inches(0.7), val,
-             size=36, bold=True, color=INK, align=PP_ALIGN.CENTER)
-    add_text(slide, x, Inches(5.55), sw, Inches(0.4), label.upper(),
-             size=10, color=INK_MUTED, align=PP_ALIGN.CENTER)
-
-add_text(slide, Inches(0.83), Inches(6.4), Inches(11.67), Inches(0.4),
-         "All transformations are implemented as UV scripts in training/data_pipelines/ and are reproducible.",
-         size=11, color=INK_MUTED)
-
-add_footer(slide, "Phase 2 · Curation", "05 / 13")
-
-
-# ============================================================ 06 PHASE 3 DATASETS
-slide = prs.slides.add_slide(blank)
-set_bg(slide, SURFACE)
-add_accent_bar(slide)
-add_kicker(slide, "Phase 3 — Task datasets")
-add_title(slide, "Three datasets, one per model task")
-
+# Three datasets cards at bottom
+ds_y = Inches(5.45)
 datasets = [
-    ("text-to-sql-mix-v2", "761,155", "Apache-2.0",
-     "10 merged public sources",
-     "huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2"),
-    ("chart-reasoning-mix-v1", "~75,000", "CC-BY-4.0",
-     "nvBench (25k) + GPT-4.1-nano knowledge distillation (50k)",
-     "huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1"),
-    ("svg-chart-render-v1", "~25,000", "Apache-2.0",
-     "nvBench charts re-rendered via matplotlib SVG backend",
-     "huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1"),
+    ("text-to-sql-mix-v2", "761,155 rows", "10 public sources"),
+    ("chart-reasoning-mix-v1", "~75,000 rows", "nvBench + GPT-4.1-nano"),
+    ("svg-chart-render-v1", "~25,000 rows", "matplotlib SVG re-renders"),
 ]
-
-cw = Inches(3.95); cg = Inches(0.25)
-total = cw * 3 + cg * 2
-cx = (SLIDE_W - total) / 2
-for i, (name, rows, lic, source, url) in enumerate(datasets):
+cw = Inches(3.85); cg = Inches(0.25)
+total_c = cw * 3 + cg * 2
+cx = (SLIDE_W - total_c) / 2
+for i, (name, rows, source) in enumerate(datasets):
     x = cx + (cw + cg) * i
-    add_rect(slide, x, Inches(2.3), cw, Inches(4.3),
-             fill=SURFACE_RAISED, line=INK_FAINT, line_w=0.75)
-    # accent stripe top
-    accent_strip = slide.shapes.add_shape(
-        MSO_SHAPE.RECTANGLE, x + Inches(0.15), Inches(2.45),
-        Inches(0.3), Inches(0.05))
-    accent_strip.fill.solid()
-    accent_strip.fill.fore_color.rgb = ACCENT
-    accent_strip.line.fill.background()
+    add_rect(slide, x, ds_y, cw, Inches(1.3),
+             fill=SURFACE_RAISED, line=ACCENT, line_w=1.0)
+    add_text(slide, x + Inches(0.2), ds_y + Inches(0.15),
+             cw - Inches(0.4), Inches(0.3),
+             f"DATASET · 0{i+1}", size=9, bold=True, color=ACCENT)
+    add_text(slide, x + Inches(0.2), ds_y + Inches(0.45),
+             cw - Inches(0.4), Inches(0.4),
+             name, size=12, bold=True, color=INK, font=FONT_MONO)
+    add_text(slide, x + Inches(0.2), ds_y + Inches(0.8),
+             cw - Inches(0.4), Inches(0.3),
+             rows, size=11, color=INK)
+    add_text(slide, x + Inches(0.2), ds_y + Inches(1.05),
+             cw - Inches(0.4), Inches(0.3),
+             source, size=10, color=INK_MUTED)
 
-    add_text(slide, x + Inches(0.15), Inches(2.6), cw - Inches(0.3), Inches(0.3),
-             f"DATASET · 0{i+1}", size=10, bold=True, color=ACCENT)
-    add_text(slide, x + Inches(0.15), Inches(2.95), cw - Inches(0.3), Inches(0.5),
-             name, size=18, bold=True, color=INK, font=FONT_MONO)
-    add_text(slide, x + Inches(0.15), Inches(3.6), cw - Inches(0.3), Inches(0.7),
-             rows, size=30, bold=True, color=INK)
-    add_text(slide, x + Inches(0.15), Inches(4.3), cw - Inches(0.3), Inches(0.4),
-             "ROWS", size=9, color=INK_MUTED)
-    add_text(slide, x + Inches(0.15), Inches(4.7), cw - Inches(0.3), Inches(0.4),
-             f"License · {lic}", size=11, color=INK_MUTED)
-    add_text(slide, x + Inches(0.15), Inches(5.0), cw - Inches(0.3), Inches(1.0),
-             source, size=11, color=INK)
-    add_text(slide, x + Inches(0.15), Inches(6.05), cw - Inches(0.3), Inches(0.4),
-             url, size=9, color=ACCENT)
-
-add_footer(slide, "Phase 3 · Task datasets", "06 / 13")
+add_footer(slide, "Data sourcing, curation, and datasets built", "03 / 08")
 
 
-# ============================================================ 07 PHASE 4 SETUP
-slide = prs.slides.add_slide(blank)
-set_bg(slide, SURFACE)
-add_accent_bar(slide)
-add_kicker(slide, "Phase 4 — Training setup")
-add_title(slide, "QLoRA via Unsloth")
-
-# Left column
-add_text(slide, Inches(0.83), Inches(2.4), Inches(6.0), Inches(0.6),
-         "We use 4-bit QLoRA with the Unsloth library for all three fine-tunes.",
-         size=14, color=INK)
-add_text(slide, Inches(0.83), Inches(3.1), Inches(6.0), Inches(0.4),
-         "REASONS", size=10, bold=True, color=ACCENT)
-add_paragraphs(slide, Inches(0.83), Inches(3.4), Inches(6.0), Inches(3.5), [
-    "•  Allows training a 7B model on a single 48 GB GPU",
-    "•  Approximately 2× faster than vanilla transformers",
-    "•  Approximately 40% lower memory consumption",
-    "•  Output is a 160 MB adapter rather than 14 GB of full weights",
-], size=13, color=INK)
-
-# Right comparison table
-tx = Inches(7.4); ty = Inches(2.4); tw = Inches(5.0); th = Inches(3.5)
-add_rect(slide, tx, ty, tw, th, fill=SURFACE_RAISED, line=INK_FAINT, line_w=0.75)
-
-# Table headers
-add_text(slide, tx + Inches(0.2), ty + Inches(0.2), Inches(2.0), Inches(0.3),
-         "ASPECT", size=9, bold=True, color=INK_MUTED)
-add_text(slide, tx + Inches(2.2), ty + Inches(0.2), Inches(1.4), Inches(0.3),
-         "VANILLA", size=9, bold=True, color=INK_MUTED)
-add_text(slide, tx + Inches(3.6), ty + Inches(0.2), Inches(1.4), Inches(0.3),
-         "UNSLOTH", size=9, bold=True, color=INK_MUTED)
-
-rows = [
-    ("7B on 48 GB GPU", "does not fit", "fits in 4-bit"),
-    ("Speed", "baseline", "~2× faster"),
-    ("Memory", "baseline", "~40% less"),
-    ("Output", "14 GB", "160 MB adapter"),
-]
-for i, (a, b, c) in enumerate(rows):
-    yy = ty + Inches(0.6 + i * 0.5)
-    add_text(slide, tx + Inches(0.2), yy, Inches(2.0), Inches(0.4), a, size=12, color=INK)
-    add_text(slide, tx + Inches(2.2), yy, Inches(1.4), Inches(0.4), b, size=12, color=INK_MUTED)
-    add_text(slide, tx + Inches(3.6), yy, Inches(1.4), Inches(0.4), c, size=12, bold=True, color=INK)
-
-add_footer(slide, "Phase 4 · Training setup", "07 / 13")
-
-
-# ============================================================ 08-10 THREE MODELS
-def model_slide(num_label, page, role_num, name, function, base, dataset, dataset_url,
-                method, hardware, time, loss, cost, size, hub, note):
+# ============================================================ 04, 05, 06 THREE MODELS
+def model_slide(page, role_num, name, function, base, dataset, method,
+                hardware, time, loss, cost, size, hub, note):
     slide = prs.slides.add_slide(blank)
     set_bg(slide, SURFACE)
     add_accent_bar(slide)
     add_kicker(slide, f"Phase 4 — Three fine-tunes ({role_num} of 3)")
     add_title(slide, f"Model 0{role_num} · {name}")
 
-    # Left card: function + setup
+    # Left card
     lx = Inches(0.83); ly = Inches(2.3); lw = Inches(6.0); lh = Inches(4.5)
     add_rect(slide, lx, ly, lw, lh, fill=SURFACE_RAISED, line=INK_FAINT)
-
-    # accent stripe top
     s = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,
                                 lx + Inches(0.25), ly + Inches(0.18),
                                 Inches(0.4), Inches(0.06))
@@ -475,7 +332,7 @@ def model_slide(num_label, page, role_num, name, function, base, dataset, datase
     add_text(slide, inset_x, ly + Inches(0.6), lw - Inches(0.5), Inches(0.5),
              name, size=22, bold=True, color=INK)
 
-    cur_y = ly + Inches(1.25)
+    cur_y = ly + Inches(1.3)
 
     def field(label, body, gap=0.55):
         nonlocal cur_y
@@ -495,7 +352,6 @@ def model_slide(num_label, page, role_num, name, function, base, dataset, datase
     rx = Inches(7.13); ry = Inches(2.3); rw = Inches(5.4); rh = Inches(4.5)
     add_rect(slide, rx, ry, rw, rh, fill=SURFACE_RAISED, line=INK_FAINT)
 
-    # 4 stat boxes 2x2
     stats = [(time, "Wall-clock time"),
              (loss, "Final loss"),
              (cost, "Compute cost"),
@@ -512,27 +368,23 @@ def model_slide(num_label, page, role_num, name, function, base, dataset, datase
         add_text(slide, sx_box, sy_box + Inches(0.6), sw_in, Inches(0.4),
                  label.upper(), size=9, color=INK_MUTED)
 
-    # Hub link
     add_text(slide, rx + Inches(0.25), ry + Inches(2.65), rw - Inches(0.5), Inches(0.3),
              "HUB", size=9, bold=True, color=INK_MUTED)
     add_text(slide, rx + Inches(0.25), ry + Inches(2.95), rw - Inches(0.5), Inches(0.5),
              hub, size=11, color=ACCENT, font=FONT_MONO)
-
-    # Note
     add_text(slide, rx + Inches(0.25), ry + Inches(3.6), rw - Inches(0.5), Inches(0.8),
              note, size=11, color=INK_MUTED)
 
-    add_footer(slide, f"Phase 4 · Model 0{role_num}", f"{page} / 13")
+    add_footer(slide, f"Phase 4 · Model 0{role_num}", page)
 
 
 # Model 01 · SQL Generator
 model_slide(
-    num_label="08", page="08", role_num=1,
+    page="04 / 08", role_num=1,
     name="SQL Generator",
     function="Translates a natural-language question and schema into a valid SQL query.",
     base="Qwen 2.5 Coder 7B Instruct",
     dataset="text-to-sql-mix-v2 (672,949 examples)",
-    dataset_url="huggingface.co/datasets/DanielRegaladoCardoso/text-to-sql-mix-v2",
     method="QLoRA r=16, α=32, 4-bit base · TRL packing=True (154,462 packed sequences) · 1 epoch · 9,654 steps",
     hardware="1× NVIDIA L40S (48 GB) on Hugging Face Jobs",
     time="13.5h", loss="0.27", cost="~$24", size="161 MB",
@@ -542,12 +394,11 @@ model_slide(
 
 # Model 02 · Chart Reasoner
 model_slide(
-    num_label="09", page="09", role_num=2,
+    page="05 / 08", role_num=2,
     name="Chart Reasoner",
     function="Given a question and SQL result rows, decides the chart type and which columns to plot.",
     base="Microsoft Phi-3 Mini 4k Instruct",
     dataset="chart-reasoning-mix-v1 (~75,000 pairs)",
-    dataset_url="huggingface.co/datasets/DanielRegaladoCardoso/chart-reasoning-mix-v1",
     method="QLoRA r=16, α=32, 4-bit base · 1 epoch · structured-JSON output objective",
     hardware="HF Jobs A10G / Colab Pro",
     time="~3h", loss="~0.31", cost="~$3", size="38 MB",
@@ -557,12 +408,11 @@ model_slide(
 
 # Model 03 · SVG Renderer
 model_slide(
-    num_label="10", page="10", role_num=3,
+    page="06 / 08", role_num=3,
     name="SVG Renderer",
     function="Given a chart spec and data, produces inline SVG markup for the visualization.",
     base="DeepSeek Coder 1.3B Instruct",
     dataset="svg-chart-render-v1 (~25,000 chart-spec → SVG pairs)",
-    dataset_url="huggingface.co/datasets/DanielRegaladoCardoso/svg-chart-render-v1",
     method="QLoRA r=16, α=32, 4-bit base · 1 epoch · code-generation objective",
     hardware="Colab T4",
     time="~2h", loss="~0.40", cost="~$1", size="22 MB",
@@ -571,121 +421,82 @@ model_slide(
 )
 
 
-# ============================================================ 11 ARCHITECTURE
+# ============================================================ 07 ARCHITECTURE + COST
 slide = prs.slides.add_slide(blank)
 set_bg(slide, SURFACE)
 add_accent_bar(slide)
-add_kicker(slide, "Phase 5 — System architecture")
-add_title(slide, "End-to-end query flow")
+add_kicker(slide, "Phases 5 and 6 — Architecture and cost")
+add_title(slide, "End-to-end query flow and total compute spend")
 
-# Simple horizontal flow boxes
+# Architecture flow
 flow = [
-    ("CSV / NL Q", False, False),
-    ("Schema +\nDuckDB", False, False),
-    ("Orchestrator", False, True),  # dark
-    ("SQL Generator\nQwen + LoRA", True, False),
-    ("Chart Reasoner\nPhi-3 + LoRA", True, False),
-    ("SVG Renderer\nDeepSeek + LoRA", True, False),
-    ("Chart +\nfinding", False, False, True),  # accent fill
+    ("CSV / NL Q", False, False, False),
+    ("Schema +\nDuckDB", False, False, False),
+    ("Orchestrator", False, True, False),
+    ("SQL Generator\nQwen + LoRA", True, False, False),
+    ("Chart Reasoner\nPhi-3 + LoRA", True, False, False),
+    ("SVG Renderer\nDeepSeek + LoRA", True, False, False),
+    ("Chart +\nfinding", False, False, True),
 ]
 fw = Inches(1.55); fg = Inches(0.18)
 total = fw * len(flow) + fg * (len(flow) - 1)
 fx = (SLIDE_W - total) / 2
-for i, item in enumerate(flow):
-    if len(item) == 4:
-        label, accent_border, dark_fill, accent_fill = item
-    else:
-        label, accent_border, dark_fill = item
-        accent_fill = False
+for i, (label, accent_border, dark_fill, accent_fill) in enumerate(flow):
     x = fx + (fw + fg) * i
     fill = INK if dark_fill else (ACCENT if accent_fill else SURFACE_RAISED)
     line = ACCENT if accent_border else INK_FAINT
     line_w = 1.5 if accent_border else 0.75
     text_color = WHITE if (dark_fill or accent_fill) else INK
-    add_rect(slide, x, Inches(3.0), fw, Inches(1.5), fill=fill, line=line, line_w=line_w)
-    add_text(slide, x, Inches(3.4), fw, Inches(0.9), label,
+    add_rect(slide, x, Inches(2.3), fw, Inches(1.4), fill=fill, line=line, line_w=line_w)
+    add_text(slide, x, Inches(2.65), fw, Inches(0.9), label,
              size=11, bold=True, color=text_color, align=PP_ALIGN.CENTER)
     if i < len(flow) - 1:
         ax = x + fw + Inches(0.04)
-        add_line(slide, ax, Inches(3.75), ax + Inches(0.10), Inches(3.75),
+        add_line(slide, ax, Inches(3.0), ax + Inches(0.10), Inches(3.0),
                  color=INK_MUTED, weight=0.75)
 
-# Description
-add_text(slide, Inches(0.83), Inches(5.3), Inches(11.67), Inches(0.5),
-         "Per query: four model invocations and a DuckDB execution. End-to-end latency: 5–8 seconds on a warm GPU.",
-         size=14, color=INK)
-add_text(slide, Inches(0.83), Inches(5.85), Inches(11.67), Inches(0.5),
-         "All adapters loaded once at module level on a half-H200 via Hugging Face ZeroGPU.",
-         size=13, color=INK_MUTED)
-add_text(slide, Inches(0.83), Inches(6.3), Inches(11.67), Inches(0.5),
-         "Self-correcting SQL: failed queries retried up to three times with the error in context.",
-         size=13, color=INK_MUTED)
+# Description below flow
+add_text(slide, Inches(0.83), Inches(3.85), Inches(11.67), Inches(0.4),
+         "Per query: 4 model calls + DuckDB execution. End-to-end latency 5–8 s on a warm GPU.",
+         size=12, color=INK)
+add_text(slide, Inches(0.83), Inches(4.2), Inches(11.67), Inches(0.4),
+         "Adapters loaded once at module level on a half-H200 via Hugging Face ZeroGPU. Self-correcting SQL retries on failure.",
+         size=11, color=INK_MUTED)
 
-add_footer(slide, "Phase 5 · System architecture", "11 / 13")
+# Cost section
+add_text(slide, Inches(0.83), Inches(4.85), Inches(11), Inches(0.3),
+         "TOTAL COMPUTE COST",
+         size=10, bold=True, color=ACCENT)
 
-
-# ============================================================ 12 COST
-slide = prs.slides.add_slide(blank)
-set_bg(slide, SURFACE)
-add_accent_bar(slide)
-add_kicker(slide, "Phase 6 — Deployment and cost")
-add_title(slide, "Total compute cost: approximately $30")
-
-# Left table
-tx = Inches(0.83); ty = Inches(2.4); tw = Inches(6.5); th = Inches(4.0)
-add_rect(slide, tx, ty, tw, th, fill=SURFACE_RAISED, line=INK_FAINT, line_w=0.75)
-
-cost_rows = [
-    ("Stage", "Compute", "Cost", True),
-    ("SQL Generator training", "HF Jobs L40S, 13.5 h", "~$24", False),
-    ("Chart Reasoner training", "Colab / HF Jobs", "~$3", False),
-    ("SVG Renderer training", "Colab / HF Jobs", "~$1", False),
-    ("GPT-4.1-nano distillation", "OpenAI Batch API", "~$2.50", False),
-    ("Inference hosting", "HF Spaces ZeroGPU", "$0", False),
-    ("Total", "", "~$30", "bold"),
-]
-for i, row in enumerate(cost_rows):
-    if len(row) == 4:
-        a, b, c, kind = row
-    yy = ty + Inches(0.25 + i * 0.5)
-    is_header = (kind is True)
-    is_total = (kind == "bold")
-    color = INK
-    bold = is_header or is_total
-    size_pt = 10 if is_header else 12
-    add_text(slide, tx + Inches(0.25), yy, Inches(2.5), Inches(0.4),
-             a, size=size_pt, bold=bold, color=INK_MUTED if is_header else color)
-    add_text(slide, tx + Inches(2.85), yy, Inches(2.5), Inches(0.4),
-             b, size=size_pt, bold=bold, color=INK_MUTED if is_header else color)
-    add_text(slide, tx + Inches(5.4), yy, Inches(0.9), Inches(0.4),
-             c, size=size_pt, bold=bold, color=INK_MUTED if is_header else color)
-    if is_header or i == len(cost_rows) - 2:
-        add_line(slide, tx + Inches(0.15), yy + Inches(0.42),
-                 tx + tw - Inches(0.15), yy + Inches(0.42),
-                 color=INK_FAINT, weight=0.5)
-
-# Right
-add_text(slide, Inches(7.8), Inches(2.6), Inches(4.7), Inches(1.5),
+# Big $30 + breakdown
+add_text(slide, Inches(0.83), Inches(5.2), Inches(3.5), Inches(1.4),
          "$30", size=84, bold=True, color=INK)
-add_text(slide, Inches(7.8), Inches(4.0), Inches(4.7), Inches(0.4),
-         "ALL-IN COMPUTE COST", size=10, bold=True, color=INK_MUTED)
-add_text(slide, Inches(7.8), Inches(4.6), Inches(4.7), Inches(0.4),
-         "WHY THE COST IS LOW", size=10, bold=True, color=ACCENT)
-add_paragraphs(slide, Inches(7.8), Inches(4.95), Inches(4.7), Inches(2.0), [
-    "•  Unsloth QLoRA reduces memory and time",
-    "•  Sequence packing cuts SQL training time",
-    "•  ZeroGPU is free for inference",
-    "•  Only adapters are stored, not full models",
-], size=11, color=INK)
+add_text(slide, Inches(0.83), Inches(6.55), Inches(3.5), Inches(0.3),
+         "ALL-IN", size=10, bold=True, color=INK_MUTED)
 
-add_footer(slide, "Phase 6 · Deployment and cost", "12 / 13")
+# Cost table on right
+cost_rows = [
+    ("SQL Generator training", "L40S, 13.5 h", "~$24"),
+    ("Chart Reasoner training", "Colab / HF Jobs", "~$3"),
+    ("SVG Renderer training", "Colab / HF Jobs", "~$1"),
+    ("GPT-4.1-nano distillation", "OpenAI Batch", "~$2.50"),
+    ("Inference hosting", "ZeroGPU", "$0"),
+]
+ct_x = Inches(4.7); ct_y = Inches(5.2)
+for i, (a, b, c) in enumerate(cost_rows):
+    yy = ct_y + Inches(i * 0.35)
+    add_text(slide, ct_x, yy, Inches(3.8), Inches(0.3), a, size=11, color=INK)
+    add_text(slide, ct_x + Inches(3.8), yy, Inches(2.5), Inches(0.3), b, size=11, color=INK_MUTED)
+    add_text(slide, ct_x + Inches(6.3), yy, Inches(1.2), Inches(0.3), c, size=11, color=INK, align=PP_ALIGN.RIGHT)
+
+add_footer(slide, "Architecture and cost", "07 / 08")
 
 
-# ============================================================ 13 DEMO + CONCLUSION
+# ============================================================ 08 DEMO + CONCLUSION
 slide = prs.slides.add_slide(blank)
 set_bg(slide, SURFACE)
 add_accent_bar(slide)
-add_kicker(slide, "Demonstration and conclusion")
+add_kicker(slide, "Demo and conclusion")
 add_title(slide, "Live system demo and summary")
 
 # Demo strip
@@ -731,4 +542,4 @@ add_text(slide, Inches(0.83), Inches(7.05), Inches(11.67), Inches(0.3),
 # ------------------------------------------------------------ save
 out = "slides-editable.pptx"
 prs.save(out)
-print(f"Saved: {out}")
+print(f"Saved: {out} ({len(prs.slides.__iter__.__self__._sldIdLst)} slides)" if hasattr(prs.slides, '__iter__') else f"Saved: {out}")
