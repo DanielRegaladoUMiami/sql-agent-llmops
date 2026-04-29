@@ -291,6 +291,94 @@ button.secondary, button[variant="secondary"] {
   0%, 100% { opacity: 0.3; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.3); }
 }
+
+/* Pipeline stages — 4 dots with state */
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--surface-raised);
+  border: 1px solid var(--ink-faint);
+  border-radius: var(--radius-sm);
+  margin: 6px 0;
+}
+.pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-muted) !important;
+  transition: color 200ms ease;
+}
+.pipeline-step.done .pipeline-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.pipeline-step.done .pipeline-label {
+  color: var(--ink) !important;
+}
+.pipeline-step.active .pipeline-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.pipeline-step.active .pipeline-label {
+  color: var(--ink) !important;
+  font-weight: 500;
+}
+.pipeline-step.pending .pipeline-dot {
+  background: transparent;
+  border-color: var(--ink-faint);
+}
+.pipeline-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-faint);
+  flex-shrink: 0;
+}
+.pipeline-label {
+  font-size: 13px;
+}
+
+/* Polished empty state — large icon for big empty panel */
+.empty-large {
+  padding: 80px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+}
+.empty-icon {
+  color: var(--ink-muted);
+  margin-bottom: 22px;
+  animation: fadeIn 400ms ease-out;
+}
+.empty-large .empty-title { font-size: 16px; margin-bottom: 8px; }
+.empty-large .empty-sub { max-width: 360px; }
+
+/* Subtle entrance animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.turn { animation: fadeInUp 250ms ease-out; }
+.chart-wrap { animation: fadeInUp 350ms ease-out 50ms backwards; }
+.narration { animation: fadeInUp 350ms ease-out 150ms backwards; }
+.downloads { animation: fadeInUp 350ms ease-out 200ms backwards; }
+.suggestion-chip {
+  animation: fadeInUp 250ms ease-out backwards;
+}
+.suggestions .suggestion-chip:nth-child(1) { animation-delay: 50ms; }
+.suggestions .suggestion-chip:nth-child(2) { animation-delay: 100ms; }
+.suggestions .suggestion-chip:nth-child(3) { animation-delay: 150ms; }
+.suggestions .suggestion-chip:nth-child(4) { animation-delay: 200ms; }
+.schema-col { animation: fadeIn 200ms ease-out backwards; }
 .turn-error {
   background: var(--accent-soft);
   border-left: 3px solid var(--accent);
@@ -700,12 +788,36 @@ def _data_table_html(rows: list[dict], max_rows: int = 10) -> str:
     return f'<table class="data-table"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>{note}'
 
 
-def _turn_html_progress(question: str, status: str) -> str:
-    """Render a turn that's still in progress (with animated indicator)."""
+PIPELINE_STAGES = [
+    ("sql", "Generating SQL"),
+    ("execute", "Running query"),
+    ("chart", "Designing chart"),
+    ("render", "Rendering visualization"),
+]
+
+
+def _turn_html_progress(question: str, current_stage: str = "sql") -> str:
+    """Render a turn that's still in progress with multi-step pipeline view."""
+    items = []
+    seen_active = False
+    for key, label in PIPELINE_STAGES:
+        if key == current_stage:
+            cls = "active"
+            seen_active = True
+        elif seen_active:
+            cls = "pending"
+        else:
+            cls = "done"
+        items.append(
+            f'<div class="pipeline-step {cls}">'
+            f'<span class="pipeline-dot"></span>'
+            f'<span class="pipeline-label">{label}</span>'
+            f'</div>'
+        )
     return (
         '<div class="turn">'
         f'<div class="turn-question">{question}</div>'
-        f'<div class="turn-progress">{status}</div>'
+        f'<div class="pipeline">{"".join(items)}</div>'
         '</div>'
     )
 
@@ -749,7 +861,8 @@ def _turn_html_complete(result: dict) -> str:
 
 
 def _conversation_html(history: list[dict], in_progress: tuple[str, str] | None = None) -> str:
-    """Conversation HTML reacts to: data loaded? history? in-progress?"""
+    """Conversation HTML reacts to: data loaded? history? in-progress?
+    in_progress is a tuple of (question, current_stage_key)."""
     has_data = bool(get_agent().list_tables())
     has_turns = bool(history) or in_progress is not None
 
@@ -765,11 +878,25 @@ def _conversation_html(history: list[dict], in_progress: tuple[str, str] | None 
 
 
 def _empty_state_html() -> str:
+    """No data loaded — polished placeholder for the right panel."""
+    icon = (
+        '<svg viewBox="0 0 64 64" width="64" height="64" fill="none" '
+        'stroke="currentColor" stroke-width="1.25" stroke-linecap="round" '
+        'stroke-linejoin="round" style="opacity:0.35">'
+        '<rect x="8" y="14" width="48" height="38" rx="4"/>'
+        '<line x1="8" y1="24" x2="56" y2="24"/>'
+        '<line x1="22" y1="14" x2="22" y2="52"/>'
+        '<line x1="36" y1="14" x2="36" y2="52"/>'
+        '<circle cx="46" cy="36" r="6"/>'
+        '<line x1="50" y1="40" x2="56" y2="46"/>'
+        '</svg>'
+    )
     return (
-        '<div class="empty">'
-        '<div class="empty-title">No data loaded yet</div>'
-        '<div class="empty-sub">Drop a CSV, JSON, Parquet or Excel file above, '
-        'or click <strong>Load demo dataset</strong> to play with sample data.</div>'
+        '<div class="empty empty-large">'
+        f'<div class="empty-icon">{icon}</div>'
+        '<div class="empty-title">No data loaded</div>'
+        '<div class="empty-sub">Upload a CSV, JSON, Parquet or Excel file '
+        'on the left, or click <strong>Demo</strong> to try sample data.</div>'
         '</div>'
     )
 
@@ -861,8 +988,10 @@ def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], Non
         yield _conversation_html([result]), "", [result]
         return
 
-    # First yield: show the question with progress indicator (no past history)
-    yield _conversation_html([], in_progress=(question, "Generating SQL…")), "", []
+    # Stream pipeline stages so user sees progress (4 visual steps).
+    # The actual GPU call is one shot (yielding mid-call would break the
+    # @spaces.GPU window) but we still surface the stages around it.
+    yield _conversation_html([], in_progress=(question, "sql")), "", []
 
     try:
         result = _gpu_process(question)
@@ -870,7 +999,6 @@ def on_ask(question: str, history: list) -> Generator[Tuple[str, str, list], Non
         logger.exception("ask failed")
         result = {"question": question, "error": str(e)}
 
-    # Replace history with just this single result
     yield _conversation_html([result]), "", [result]
 
 
