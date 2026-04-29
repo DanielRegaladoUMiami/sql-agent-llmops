@@ -91,23 +91,29 @@ gradio-app, .gradio-container, .main, .app, .contain, .wrap {
   font-family: var(--font) !important;
 }
 .gradio-container {
-  max-width: 1280px !important;
+  max-width: 1600px !important;
+  width: 100% !important;
   margin: 0 auto !important;
-  padding: 36px 32px 100px !important;
+  padding: 32px 40px 60px !important;
+  min-height: 920px !important;
+  box-sizing: border-box;
 }
 
-/* Two-column rectangular layout */
+/* Two-column rectangular layout — 16:9-ish aspect, fixed feel */
 .split-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) 1fr;
-  gap: 32px;
+  grid-template-columns: minmax(360px, 460px) 1fr;
+  gap: 36px;
   align-items: start;
+  min-height: 820px;
 }
-@media (max-width: 860px) {
-  .split-layout { grid-template-columns: 1fr; gap: 20px; }
+@media (max-width: 900px) {
+  .split-layout { grid-template-columns: 1fr; gap: 22px; min-height: auto; }
+  .gradio-container { padding: 24px 18px 60px !important; min-height: auto !important; }
 }
 .split-left { position: sticky; top: 24px; }
-.split-right { min-height: 400px; }
+.split-right { min-height: 720px; display: flex; flex-direction: column; }
+.split-right > .panel-label { flex-shrink: 0; }
 
 .panel-label {
   font-size: 11px;
