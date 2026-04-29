@@ -25,7 +25,8 @@ Your job: convert a natural-language question into ONE correct SQL query.
 4. **Aggregations**: alias them descriptively, e.g. `AVG(price) AS avg_price`, `COUNT(*) AS total`.
 5. **Default to TOP 10** when the user asks for "top", "best", "most" without specifying a number.
 6. **Filter explicitly**: if the user mentions a categorical value (e.g. "active customers"), match it against distinct values in the hints and use the exact spelling.
-7. Output **only the SQL**. No markdown fences, no explanation. End with a semicolon.
+7. **GROUP BY rule (critical)**: every non-aggregated column in SELECT must appear in GROUP BY, OR be wrapped in an aggregation (`AVG`, `SUM`, `COUNT`, `MAX`, `MIN`). Never SELECT a raw column when GROUP BY is present unless it's a grouping key.
+8. Output **only the SQL**. No markdown fences, no explanation. End with a semicolon.
 
 ## Examples
 Schema: CREATE TABLE sales ("id" INT, "product_name" VARCHAR, "revenue" DOUBLE);
@@ -68,12 +69,30 @@ class SQLGenerator:
         self.model.eval()
         logger.info("SQL generator ready (LoRA applied on Qwen base)")
 
-    def generate(self, question: str, schema: str) -> str:
+    def generate(
+        self,
+        question: str,
+        schema: str,
+        previous_sql: Optional[str] = None,
+        previous_error: Optional[str] = None,
+    ) -> str:
+        """Generate SQL. If previous_sql + previous_error are provided, the
+        model is told what went wrong so it can self-correct."""
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         user_content = f"### Schema\n{schema}\n\n### Question\n{question}"
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ]
+        messages.append({"role": "user", "content": user_content})
+
+        if previous_sql and previous_error:
+            # Retry context: feed the model its previous attempt + the error
+            messages.append({"role": "assistant", "content": previous_sql})
+            messages.append({
+                "role": "user",
+                "content": (
+                    f"That query failed with error:\n{previous_error}\n\n"
+                    "Fix the query. Return only the corrected SQL."
+                ),
+            })
+
         input_ids = self.tokenizer.apply_chat_template(
             messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
         ).to(self.model.device)

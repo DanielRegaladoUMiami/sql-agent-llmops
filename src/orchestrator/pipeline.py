@@ -71,14 +71,36 @@ class SQLAgentOrchestrator:
                 result["error"] = "No data loaded. Upload a CSV/JSON first."
                 return result
 
-            sql = self.sql_generator.generate(question=question, schema=schema)
-            result["sql"] = sql
+            # SQL with self-correction loop: up to 3 attempts. Each retry
+            # feeds the previous SQL + error back to the model so it learns
+            # from its own mistake.
+            sql = None
+            last_error = None
+            for attempt in range(3):
+                sql = self.sql_generator.generate(
+                    question=question,
+                    schema=schema,
+                    previous_sql=sql if attempt > 0 else None,
+                    previous_error=last_error if attempt > 0 else None,
+                )
+                # Try to actually execute (validate+run in one shot)
+                try:
+                    rows, cols = self.executor.execute(sql)
+                    last_error = None
+                    break
+                except Exception as e:
+                    last_error = str(e)
+                    logger.info(f"SQL attempt {attempt+1} failed: {last_error}")
+                    rows, cols = [], []
 
-            if not self.executor.validate_query(sql):
-                result["error"] = f"Generated SQL is invalid:\n{sql}"
+            result["sql"] = sql
+            if last_error:
+                result["error"] = (
+                    f"Could not produce a valid SQL query after 3 attempts.\n"
+                    f"Last error: {last_error}"
+                )
                 return result
 
-            rows, cols = self.executor.execute(sql)
             result["results"] = rows
             result["columns"] = cols
 
