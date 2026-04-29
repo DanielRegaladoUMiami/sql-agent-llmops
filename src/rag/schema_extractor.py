@@ -91,12 +91,49 @@ class SchemaExtractor:
         return "\n\n".join(chunks)
 
     def get_schema_text(self) -> str:
-        """One-shot helper: full schema as CREATE statements + sample rows."""
+        """Schema description optimized for LLM SQL generation:
+        - CREATE TABLE statements (canonical column names + types)
+        - Sample rows (so model sees realistic values)
+        - For low-cardinality categorical columns: list of distinct values
+          (gives the model a vocabulary to match user wording against)
+        """
         info = self.extract_full_schema()
         out = [info["create_statements"]]
+
         for t in info["tables"]:
             if t["sample"]:
                 out.append(f"\n-- Sample rows from {t['name']}:")
                 for row in t["sample"]:
                     out.append(f"-- {row}")
+
+            # Distinct-values hints for categorical columns
+            for col in t["columns"]:
+                hint = self._distinct_values_hint(t["name"], col)
+                if hint:
+                    out.append(hint)
+
         return "\n".join(out)
+
+    def _distinct_values_hint(
+        self, table: str, col: Dict[str, Any], threshold: int = 25
+    ) -> str | None:
+        """If a column is categorical with <=threshold distinct values,
+        list them so the LLM can map user wording to actual values."""
+        dtype = (col.get("type") or "").upper()
+        # Only worth doing for string-ish columns
+        if not any(t in dtype for t in ("VARCHAR", "STRING", "TEXT", "CHAR")):
+            return None
+        try:
+            rows = self.con.execute(
+                f'SELECT DISTINCT "{col["name"]}" FROM "{table}" '
+                f'WHERE "{col["name"]}" IS NOT NULL '
+                f'LIMIT {threshold + 1}'
+            ).fetchall()
+        except Exception:
+            return None
+        if len(rows) > threshold:
+            return None  # too many distinct values, not categorical
+        if len(rows) <= 1:
+            return None  # not informative
+        values = ", ".join(repr(r[0]) for r in rows)
+        return f"-- {table}.{col['name']} distinct values: {values}"
